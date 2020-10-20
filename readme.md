@@ -13,6 +13,7 @@ insmod AuditModule.ko
 
 ```bash
 dmesg
+dmesg -c // clear the log
 ```
 
 ### Exit
@@ -26,6 +27,6 @@ rmmod AuditModule.ko
 the following sentence reloads the system call
 
 ```C
-// sys_call_table[__NR_openat] = (demo_sys_call_ptr_t) hacked_openat;
+sys_call_table[__NR_openat] = (demo_sys_call_ptr_t) hacked_openat;
 ```
 

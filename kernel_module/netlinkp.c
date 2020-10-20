@@ -75,12 +75,12 @@ void get_fullname(const char *pathname,char *fullname)
 
 
 
-int AuditOpenat(struct pt_regs * regs, char * pathname,int ret)
+int AuditOpenat(struct pt_regs *regs, char *pathname, int ret)
 {
     char commandname[TASK_COMM_LEN];
     char fullname[PATH_MAX];
     unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
-    void * buffer; // = kmalloc(size, 0);
+    void *buffer; // = kmalloc(size, 0);
     char auditpath[PATH_MAX];
     const struct cred *cred;
 
@@ -89,16 +89,16 @@ int AuditOpenat(struct pt_regs * regs, char * pathname,int ret)
     memset(auditpath, 0, PATH_MAX);
 
 
-    get_fullname(pathname,fullname);
+    get_fullname(pathname, fullname);
 
-    printk("Info: fullname is  %s \n",fullname);
+    printk("Info: fullname is  %s \n", fullname);
 
 
-    strcpy(auditpath,AUDITPATH);
+    strcpy(auditpath, AUDITPATH);
 
-    if (strncmp(fullname,auditpath,strlen(auditpath)) != 0) return 1;
+    if (strncmp(fullname, auditpath, strlen(auditpath)) != 0) return 1;
 
-    printk("Info: fullname is  %s \t; Auditpath is  %s \n",fullname,AUDITPATH);
+    printk("Info: fullname is  %s \t; Auditpath is  %s \n", fullname, AUDITPATH);
 
 
     strncpy(commandname,current->comm,TASK_COMM_LEN);
