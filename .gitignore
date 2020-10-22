@@ -1,0 +1,9 @@
+*.db
+*.ko
+*.mod
+*.symvers
+*.sqlite3
+*.o*
+
+__pycache__
+django
