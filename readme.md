@@ -52,10 +52,14 @@ gcc auditdemo.c db.h -l sqlite3 -o audit
 ## Start Django
 
 ```bash
-python manage.py inspectdb > audit/models.py // resave with UTF-8
-python manage.py makemigrations
-python manage.py migrate
 python manage.py runserver 0.0.0.0:4000
+```
+
+## Start Frontend
+
+```bash
+npm install --registry=https://registry.npm.taobao.org
+npm run dev
 ```
 
 ## Todo List
