@@ -6,4 +6,5 @@
 *.o*
 
 __pycache__
-django
+node_modules
+migrations
