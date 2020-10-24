@@ -26,7 +26,7 @@ void create_table(char *filename)
     }
     // sql =  "CREATE TABLE save_data(num integer primary key, id int, data text, time text)";
     sql = "CREATE TABLE OPEN("  \
-          "ID INT PRIMARY KEY  ,"  \
+          "ID INTEGER PRIMARY KEY AUTOINCREMENT ,"  \
           "USERNAME       TEXT ,"  \
           "UID            INT  ,"  \
           "COMMANDNAME    TEXT ,"  \

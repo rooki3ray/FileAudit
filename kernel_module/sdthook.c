@@ -54,7 +54,7 @@ asmlinkage long hacked_openat(struct pt_regs *regs)
 
 
 
-  	nbytes=strncpy_from_user(buffer,(char*)regs->bx,PATH_MAX);
+  	nbytes=strncpy_from_user(buffer, (char*)regs->bx, PATH_MAX);
 
    	printk("Info:   hooked sys_openat(), file name:%s(%ld bytes)",buffer,nbytes);
 
@@ -84,12 +84,12 @@ static int __init audit_init(void)
         set_pte_atomic(pte, pte_mkwrite(*pte));
         printk("Info: Disable write-protection of page with sys_call_table\n");
 
-        // sys_call_table[__NR_openat] = (demo_sys_call_ptr_t) hacked_openat;
+        sys_call_table[__NR_openat] = (demo_sys_call_ptr_t) hacked_openat;
 
         set_pte_atomic(pte, pte_clear_flags(*pte, _PAGE_RW));
         printk("Info: sys_call_table hooked!\n");
 
-        // netlink_init();
+        netlink_init();
         return 0;
 }
 
@@ -100,12 +100,12 @@ static void __exit audit_exit(void)
     pte = lookup_address((unsigned long) sys_call_table, &level);
     set_pte_atomic(pte, pte_mkwrite(*pte));
 
-	// sys_call_table[__NR_openat] = (demo_sys_call_ptr_t)orig_openat;
+	sys_call_table[__NR_openat] = (demo_sys_call_ptr_t)orig_openat;
 
 	set_pte_atomic(pte, pte_clear_flags(*pte, _PAGE_RW));
 
 
-    // netlink_release();
+    netlink_release();
 }
 
 module_init(audit_init);
