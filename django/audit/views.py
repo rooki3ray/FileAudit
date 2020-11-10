@@ -65,3 +65,4 @@ def table_open_delete(request):
     response['Access-Control-Allow-Origin'] = '*'  # 允许所有的域名地址
     response["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS,PATCH,PUT"  # 允许的请求方式
     return response
+
