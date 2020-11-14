@@ -351,7 +351,7 @@ int AuditMkdir(struct pt_regs *regs, char * pathname, int ret)
     *((int*)buffer + 1) = current->pid;
     *((int*)buffer + 2) = regs->si; //mkdir的mode
     *((int*)buffer + 3) = ret; //mkdir结果
-    printk("%o", *((int*)buffer + 3));
+    printk("%o", *((int*)buffer + 2));
     strcpy( (char*)( 4 + (int*)buffer ), commandname);
     strcpy( (char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);  //mkdir的目录
     
