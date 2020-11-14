@@ -17,6 +17,7 @@
 #define TM_FMT "%Y-%m-%d %H:%M:%S"
 
 #define NETLINK_TEST 29
+#define TASK_COMM_LEN 16
 #define MAX_PAYLOAD 1024  /* maximum payload size*/
 int sock_fd;
 struct msghdr msg;
@@ -24,17 +25,23 @@ struct nlmsghdr *nlh = NULL;
 struct sockaddr_nl src_addr, dest_addr;
 struct iovec iov;
 
+// distinguish log from netlink socket
+char *syscall_name[] = {"open", "read", "write", "close"}; 
+
 FILE *logfile;
 
-void Log(char *commandname,int uid, int pid, char *file_path, int flags,int ret)
+void Log(char *flag, char *commandname, int uid, int pid, char *file_path, int flags, int ret)
 {
 	char logtime[64];
 	char username[32];
 	struct passwd *pwinfo;
 	char openresult[10];
 	char opentype[16];
+	char *syscall = syscall_name[atoi(flag)];
+
 	if (ret > 0) strcpy(openresult,"success");
 	else strcpy(openresult,"failed");
+
 	if (flags & O_RDONLY ) strcpy(opentype, "Read");
 	else if (flags & O_WRONLY ) strcpy(opentype, "Write");
 	else if (flags & O_RDWR ) strcpy(opentype, "Read/Write");
@@ -46,8 +53,8 @@ void Log(char *commandname,int uid, int pid, char *file_path, int flags,int ret)
 	strcpy(username,pwinfo->pw_name);
 
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
-	fprintf(logfile,"%s(%d) %s(%d) %s \"%s\" %s %s\n",username,uid,commandname,pid,logtime,file_path,opentype, openresult);
-	printf("%s(%d) %s(%d) %s \"%s\" %s %s\n",username,uid,commandname,pid,logtime,file_path,opentype, openresult);
+	fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,opentype, openresult);
+	printf("%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall,username,uid,commandname,pid,logtime,file_path,opentype, openresult);
     insert_record("OPEN", username, uid, commandname, pid, logtime, file_path, opentype, openresult);
 }
 
@@ -128,6 +135,7 @@ int main(int argc, char *argv[]){
 		if (count > 10) break;
         count++;
         unsigned int uid, pid,flags,ret;
+		char * flag;
 		char * file_path;
 		char * commandname;
 		recvmsg(sock_fd, &msg, 0);
@@ -135,9 +143,10 @@ int main(int argc, char *argv[]){
         pid = *( 1 + (int *)NLMSG_DATA(nlh)  );
         flags = *( 2 + (int *)NLMSG_DATA(nlh)  );
         ret = *( 3 + (int *)NLMSG_DATA(nlh)  );
-        commandname = (char *)( 4 + (int *)NLMSG_DATA(nlh));
-        file_path = (char *)( 4 + 16/4 + (int *)NLMSG_DATA(nlh));
-        Log(commandname, uid, pid, file_path, flags, ret);
+		flag = (char *)( 4 + (int *)NLMSG_DATA(nlh));
+        commandname = (char *)( 6 + (int *)NLMSG_DATA(nlh));
+        file_path = (char *)( 6 + TASK_COMM_LEN/4 + (int *)NLMSG_DATA(nlh));
+        Log(flag, commandname, uid, pid, file_path, flags, ret);
     }
 	close(sock_fd);
 	free(nlh);

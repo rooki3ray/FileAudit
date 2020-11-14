@@ -81,6 +81,7 @@ void get_fullname(const char *pathname,char *fullname)
 
 int AuditOpenat(struct pt_regs *regs, char *pathname, int ret)
 {
+    char *flag = "00";
     char commandname[TASK_COMM_LEN];
     char fullname[PATH_MAX];
     unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
@@ -104,7 +105,7 @@ int AuditOpenat(struct pt_regs *regs, char *pathname, int ret)
 
     strncpy(commandname,current->comm,TASK_COMM_LEN);
 
-    size = strlen(fullname) + 16 + TASK_COMM_LEN + 1;
+    size = strlen(fullname) + 16 + TASK_COMM_LEN + 1 + strlen(flag);  // strlen(flag) == 2
     buffer = kmalloc(size, 0);
     memset(buffer, 0, size);
 
@@ -113,11 +114,12 @@ int AuditOpenat(struct pt_regs *regs, char *pathname, int ret)
     *((int*)buffer + 1) = current->pid;
     *((int*)buffer + 2) = regs->dx; // regs->dx: mode for open file
     *((int*)buffer + 3) = ret;
-    strcpy( (char*)( 4 + (int*)buffer ), commandname);
-    strcpy( (char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
+    strcpy( (char*)( 4 + (int*)buffer ), flag);
+    strcpy( (char*)( 6 + (int*)buffer ), commandname);
+    strcpy( (char*)( 6 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
 
     printk((char*)( 4 + (int*)buffer ));
-    printk((char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer ));
+    printk((char*)( 6 + (int*)buffer ));
 
     netlink_sendmsg(buffer, size);
     return 0;
@@ -126,6 +128,7 @@ int AuditOpenat(struct pt_regs *regs, char *pathname, int ret)
 
 int AuditRead(struct pt_regs *regs, char *pathname, int ret)
 {
+    char *flag = "01";
     char commandname[TASK_COMM_LEN];
     char fullname[PATH_MAX];
     unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
@@ -166,7 +169,7 @@ int AuditRead(struct pt_regs *regs, char *pathname, int ret)
 
     strncpy(commandname,current->comm,TASK_COMM_LEN);
 
-    size = strlen(fd_name) + 16 + TASK_COMM_LEN + 1 + PATH_MAX;
+    size = strlen(fd_name) + 16 + TASK_COMM_LEN + 1 + PATH_MAX + strlen(flag);
     buffer = kmalloc(size, 0);
     memset(buffer, 0, size);
 
@@ -175,13 +178,14 @@ int AuditRead(struct pt_regs *regs, char *pathname, int ret)
     *((int*)buffer + 1) = current->pid;
     *((int*)buffer + 2) = regs->dx; // regs->dx: read buf size
     *((int*)buffer + 3) = ret;
-    strcpy( (char*)( 4 + (int*)buffer ), commandname);
-    strcpy( (char*)( 4 + TASK_COMM_LEN/4 + (int*)buffer ), fullname);
-    strcpy( (char*)( 4 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ), fd_name); //不确定是否可以
+    strcpy( (char*)( 4 + (int*)buffer ), flag);
+    strcpy( (char*)( 6 + (int*)buffer ), commandname);
+    strcpy( (char*)( 6 + TASK_COMM_LEN/4 + (int*)buffer ), fullname);
+    strcpy( (char*)( 6 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ), fd_name); //不确定是否可以
 
     printk((char*)( 4 + (int*)buffer ));
-    printk( (char*)( 4 + TASK_COMM_LEN/4 + (int*)buffer ));
-    printk((char*)( 4 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ));
+    printk( (char*)( 6 + TASK_COMM_LEN/4 + (int*)buffer ));
+    printk((char*)( 6 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ));
 
     netlink_sendmsg(buffer, size);
     return 0;

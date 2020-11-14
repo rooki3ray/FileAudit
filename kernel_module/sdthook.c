@@ -134,27 +134,27 @@ static int __init audit_init(void)
 	printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
 
     // Hook Sys Call Openat
-	orig_openat = (orig_openat_t) sys_call_table[__NR_openat];
-	printk("Info:  orginal openat:%lx\n",(long)orig_openat);
+	// orig_openat = (orig_openat_t) sys_call_table[__NR_openat];
+	// printk("Info:  orginal openat:%lx\n",(long)orig_openat);
 	// Hook Sys Call Read
 	orig_read = (orig_read_t) sys_call_table[__NR_read];
 	printk("Info:  orginal read:%lx\n",(long)orig_read);
-	// Hook Sys Call Close
-	orig_close = (orig_close_t) sys_call_table[__NR_close];
-	printk("Info:  orginal close:%lx\n",(long)orig_close);
-	// Hook Sys Call write
-	orig_write = (orig_close_t) sys_call_table[__NR_write];
-	printk("Info:  orginal write:%lx\n",(long)orig_write);
+	// // Hook Sys Call Close
+	// orig_close = (orig_close_t) sys_call_table[__NR_close];
+	// printk("Info:  orginal close:%lx\n",(long)orig_close);
+	// // Hook Sys Call write
+	// orig_write = (orig_close_t) sys_call_table[__NR_write];
+	// printk("Info:  orginal write:%lx\n",(long)orig_write);
 
 	pte = lookup_address((unsigned long) sys_call_table, &level);
 	// Change PTE to allow writing
 	set_pte_atomic(pte, pte_mkwrite(*pte));
 	printk("Info: Disable write-protection of page with sys_call_table\n");
 
-	sys_call_table[__NR_openat] = (demo_sys_call_ptr_t) hacked_openat;
+	// sys_call_table[__NR_openat] = (demo_sys_call_ptr_t) hacked_openat;
 	sys_call_table[__NR_read] = (demo_sys_call_ptr_t) hacked_read;
-	sys_call_table[__NR_close] = (demo_sys_call_ptr_t) hacked_close;
-	sys_call_table[__NR_write] = (demo_sys_call_ptr_t) hacked_write;
+	// sys_call_table[__NR_close] = (demo_sys_call_ptr_t) hacked_close;
+	// sys_call_table[__NR_write] = (demo_sys_call_ptr_t) hacked_write;
 
 	set_pte_atomic(pte, pte_clear_flags(*pte, _PAGE_RW));
 	printk("Info: sys_call_table hooked!\n");
@@ -168,10 +168,10 @@ static void __exit audit_exit(void)
 {
     pte = lookup_address((unsigned long) sys_call_table, &level);
     set_pte_atomic(pte, pte_mkwrite(*pte));
-	sys_call_table[__NR_openat] = (demo_sys_call_ptr_t)orig_openat;
+	// sys_call_table[__NR_openat] = (demo_sys_call_ptr_t)orig_openat;
 	sys_call_table[__NR_read] = (demo_sys_call_ptr_t)orig_read;
-	sys_call_table[__NR_close] = (demo_sys_call_ptr_t)orig_close;
-	sys_call_table[__NR_write] = (demo_sys_call_ptr_t)orig_write;
+	// sys_call_table[__NR_close] = (demo_sys_call_ptr_t)orig_close;
+	// sys_call_table[__NR_write] = (demo_sys_call_ptr_t)orig_write;
 	set_pte_atomic(pte, pte_clear_flags(*pte, _PAGE_RW));
 
     netlink_release();
