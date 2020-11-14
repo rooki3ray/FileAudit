@@ -8,6 +8,7 @@
 #include <linux/file.h>
 #include <linux/fdtable.h>
 #include <linux/dcache.h>
+#include <linux/pid.h>
 #include <linux/fs.h>           /*struct file*/
 
 
@@ -287,7 +288,6 @@ int AuditClose(struct pt_regs *regs, char * pathname, int ret)
 
 int AuditKill(struct pt_regs *regs, char * pathname, int ret)
 {
-    //pid_t pgrp; 进程的组id
     char commandname[TASK_COMM_LEN];
     char fullname[PATH_MAX];
     unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
@@ -305,24 +305,24 @@ int AuditKill(struct pt_regs *regs, char * pathname, int ret)
     printk("kill, Info: fullname is  %s \t; Auditpath is  %s", fullname, AUDITPATH);
     
     strncpy(commandname,current->comm,TASK_COMM_LEN);
-    size = strlen(fullname) + 20 + TASK_COMM_LEN + 1;
+    size = strlen(fullname) + 32 + TASK_COMM_LEN + 1;
     
     buffer = kmalloc(size, 0);
     memset(buffer, 0, size);
 
     cred = current_cred();
-    *((int*)buffer) = cred->uid.val; ;  //uid
-    *((int*)buffer + 1) = current->pid;  //当前的pid
-    *((int*)buffer + 2) = regs->si; //sig号
-    *((int*)buffer + 3) = regs->di; //pid号
-    *((int*)buffer + 4) = ret; //kill结果
-    strcpy( (char*)( 5 + (int*)buffer ), commandname);
-    strcpy( (char*)( 5 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
-    
-    printk("%d", *((int*)buffer + 3));
-    printk((char*)( 5 + (int*)buffer ));
-    printk((char*)( 5 + TASK_COMM_LEN/4 +(int*)buffer));
-    
+    *((int*)buffer + 2) = cred->uid.val; ;  //uid
+    *((int*)buffer + 3) = current->pid;  //当前的pid
+    *((int*)buffer + 4) = task_pgrp(current)->numbers->nr; //当前的进程组id
+    *((int*)buffer + 5) = regs->si; //sig号
+    *((int*)buffer + 6) = regs->di; //pid号
+    *((int*)buffer + 7) = ret; //kill结果
+    strcpy( (char*)( 8 + (int*)buffer ), commandname);
+    strcpy( (char*)( 8 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
+
+
+    printk( (char*)( 8 + TASK_COMM_LEN/4 +(int*)buffer ));
+        
     netlink_sendmsg(buffer, size);
     return 0;
 }
@@ -360,10 +360,8 @@ int AuditMkdir(struct pt_regs *regs, char * pathname, int ret)
     printk("%o", *((int*)buffer + 2));
     strcpy( (char*)( 4 + (int*)buffer ), commandname);
     strcpy( (char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);  //mkdir的目录
-    
-    printk((char*)( 4 + (int*)buffer ));
-    printk((char*)( 4 + TASK_COMM_LEN/4 + (int*)buffer));
-    
+
+    printk((char*)( 4 + TASK_COMM_LEN/4 +(int*)buffer));
     netlink_sendmsg(buffer, size);
     return 0;
 }
