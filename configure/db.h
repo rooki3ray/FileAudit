@@ -35,7 +35,31 @@ void create_table(char *filename)
           "FILEPATH       TEXT ,"  \
           "OPENTYPE       TEXT ,"  \
           "OPENRESULT     TEXT );";
+    sqlite3_exec(db, sql, 0, 0, &zErrMsg);
 
+    sql = "CREATE TABLE READ("  \
+          "ID INTEGER PRIMARY KEY AUTOINCREMENT ,"  \
+          "USERNAME       TEXT ,"  \
+          "UID            INT  ,"  \
+          "COMMANDNAME    TEXT ,"  \
+          "PID            INT  ,"  \
+          "LOGTIME        TEXT ,"  \
+          "FILEPATH       TEXT ,"  \
+          "ReadBufSize    INT  ,"  \
+          "FDNAME         TEXT ,"  \
+          "READRESULT     TEXT );";
+    sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+
+    sql = "CREATE TABLE CLOSE("  \
+          "ID INTEGER PRIMARY KEY AUTOINCREMENT ,"  \
+          "USERNAME       TEXT ,"  \
+          "UID            INT  ,"  \
+          "COMMANDNAME    TEXT ,"  \
+          "PID            INT  ,"  \
+          "LOGTIME        TEXT ,"  \
+          "FILEPATH       TEXT ,"  \
+          "CLOSETYPE       TEXT ,"  \
+          "CLOSERESULT     TEXT );";
     sqlite3_exec(db, sql, 0, 0, &zErrMsg);
 }
 
