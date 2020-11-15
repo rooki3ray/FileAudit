@@ -369,6 +369,94 @@ int AuditMkdir(struct pt_regs *regs, char * pathname, int ret)
     return 0;
 }
 
+int AuditFchmodat(struct pt_regs *regs, char * pathname, int ret)
+{
+    int flag = 7;
+    char commandname[TASK_COMM_LEN];
+    char fullname[PATH_MAX];
+    unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
+    void *buffer; // = kmalloc(size, 0);
+    char auditpath[PATH_MAX];
+    const struct cred *cred;
+
+    memset(fullname, 0, PATH_MAX);
+    memset(auditpath, 0, PATH_MAX);
+
+    strcpy(fullname, pathname);
+    strcpy(auditpath, AUDITPATH);
+    if (strncmp(fullname, auditpath, strlen(auditpath)) != 0)  
+        return 1;
+    printk("fchmodat, Info: fullname is  %s \t; Auditpath is  %s", fullname, AUDITPATH);
+    
+    strncpy(commandname,current->comm,TASK_COMM_LEN);
+    size = strlen(fullname) + 20 + TASK_COMM_LEN + 1 + 4;
+    
+    buffer = kmalloc(size, 0);
+    memset(buffer, 0, size);
+
+    cred = current_cred();
+    *((int*)buffer) = flag;
+    *((int*)buffer + 1) = cred->uid.val; ;  //uid
+    *((int*)buffer + 2) = current->pid;
+    *((int*)buffer + 3) = regs->dx; //mod
+    *((int*)buffer + 4) = ret; //fchmodat结果
+    *((int*)buffer + 5) = regs->di; //dirfd，是否为相对路径
+    strcpy( (char*)( 6 + (int*)buffer ), commandname);
+    strcpy( (char*)( 6 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
+    
+
+    printk("mod: %o, dirfd: %d", *((int*)buffer + 3), *((int*)buffer + 5));
+    printk("fullname: %s,  commandname: %s", (char*)( 6 + TASK_COMM_LEN/4 +(int*)buffer), (char*)( 6 + (int*)buffer ));
+    printk((char*)( 8 + (int*)buffer ));
+
+    netlink_sendmsg(buffer, size);
+    return 0;
+}
+
+int AuditFchownat(struct pt_regs *regs, char * pathname, int ret)
+{
+    int flag = 8;
+    char commandname[TASK_COMM_LEN];
+    char fullname[PATH_MAX];
+    unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
+    void *buffer; // = kmalloc(size, 0);
+    char auditpath[PATH_MAX];
+    const struct cred *cred;
+
+    memset(fullname, 0, PATH_MAX);
+    memset(auditpath, 0, PATH_MAX);
+
+    get_fullname(pathname, fullname);
+    strcpy(auditpath, AUDITPATH);
+    if (strncmp(fullname, auditpath, strlen(auditpath)) != 0)  
+        return 1;
+    printk("fchownat, Info: fullname is  %s \t; Auditpath is  %s", fullname, AUDITPATH);
+    
+    strncpy(commandname,current->comm,TASK_COMM_LEN);
+    size = strlen(fullname) + 28 + TASK_COMM_LEN + 1 + 4;
+    
+    buffer = kmalloc(size, 0);
+    memset(buffer, 0, size);
+
+    cred = current_cred();
+    *((int*)buffer) = flag;
+    *((int*)buffer + 1) = cred->uid.val; ;  //uid  %zu
+    *((int*)buffer + 2) = current->pid;
+    *((int*)buffer + 3) = regs->di; //dirfd
+    *((int*)buffer + 4) = regs->r8; //int flag
+    *((int*)buffer + 5) = regs->r10; //gid_t group  %zu
+    *((int*)buffer + 6) = regs->dx; //user id
+    *((int*)buffer + 7) = ret; //fchownat结果
+    strcpy( (char*)( 8 + (int*)buffer ), commandname);
+    strcpy( (char*)( 8 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
+    
+    printk("dirfd：%d，flag: %d, groupid: %d， user： %d， commandname：%s,  fullname: %s", *((int*)buffer + 3), *((int*)buffer + 4), *((int*)buffer + 5), *((int*)buffer + 6), (char*)( 8 + (int*)buffer ), (char*)( 8 + TASK_COMM_LEN/4 +(int*)buffer));
+    printk((char*)( 8 + (int*)buffer ));
+    netlink_sendmsg(buffer, size);
+    return 0;
+}
+
+
 void nl_data_ready(struct sk_buff *__skb)
  {
     struct sk_buff *skb;
