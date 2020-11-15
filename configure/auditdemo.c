@@ -177,41 +177,41 @@ int main(int argc, char *argv[]){
 		if (count > 20) break;
         count++;
         unsigned int uid, pid,flags,ret;
-		char * flag;
+		unsigned int flag;
 		char * file_path;
 		char * commandname;
 		recvmsg(sock_fd, &msg, 0);
-		flag = (char *)((unsigned int *)NLMSG_DATA(nlh));		
+		flag = *( (unsigned int *)NLMSG_DATA(nlh) );		
 		// printf("%s\n", syscall_name[atoi(flag)]);
 
-		if (strcmp(syscall_name[atoi(flag)], "open") == 0) {
-			uid = *( 2 + (unsigned int *)NLMSG_DATA(nlh) );
-			pid = *( 3 + (int *)NLMSG_DATA(nlh)  );
-			flags = *( 4 + (int *)NLMSG_DATA(nlh)  );
-			ret = *( 5 + (int *)NLMSG_DATA(nlh)  );
-			commandname = (char *)( 6 + (int *)NLMSG_DATA(nlh));
-			file_path = (char *)( 6 + TASK_COMM_LEN/4 + (int *)NLMSG_DATA(nlh));
+		if (strcmp(syscall_name[flag], "open") == 0) {
+			uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh) );
+			pid = *( 2 + (int *)NLMSG_DATA(nlh)  );
+			flags = *( 3 + (int *)NLMSG_DATA(nlh)  );
+			ret = *( 4 + (int *)NLMSG_DATA(nlh)  );
+			commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh));
+			file_path = (char *)( 5 + TASK_COMM_LEN/4 + (int *)NLMSG_DATA(nlh));
 			LogOpen(commandname, uid, pid, file_path, flags, ret);
 		} 
-		else if (strcmp(syscall_name[atoi(flag)], "read") == 0) {
+		else if (strcmp(syscall_name[flag], "read") == 0) {
 			char *fd_name;
-			uid = *( 2 + (unsigned int *)NLMSG_DATA(nlh) );
-			pid = *( 3 + (int *)NLMSG_DATA(nlh)  );
-			flags = *( 4 + (int *)NLMSG_DATA(nlh)  );   // read buf size
-			ret = *( 5 + (int *)NLMSG_DATA(nlh)  );
-			commandname = (char *)( 6 + (int *)NLMSG_DATA(nlh));
-			file_path = (char *)( 6 + TASK_COMM_LEN/4 + (int *)NLMSG_DATA(nlh));
-			fd_name = (char *)(6 + TASK_COMM_LEN/4 + MAX_LENGTH/4+ (int*)NLMSG_DATA(nlh) );
-			// LogRead(commandname, uid, pid, file_path, flags, ret, fd_name);
-			printf("flag:%s pid:%d flags:%d commandname:%s file_path:%s\n", flag, pid, flags, commandname, file_path);
+			uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh) );
+			pid = *( 2 + (int *)NLMSG_DATA(nlh)  );
+			flags = *( 3 + (int *)NLMSG_DATA(nlh)  );   // read buf size
+			ret = *( 4 + (int *)NLMSG_DATA(nlh)  );
+			commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh));
+			file_path = (char *)( 5 + TASK_COMM_LEN/4 + (int *)NLMSG_DATA(nlh));
+			fd_name = (char *)(5 + TASK_COMM_LEN/4 + MAX_LENGTH/4+ (int*)NLMSG_DATA(nlh) );
+			LogRead(commandname, uid, pid, file_path, flags, ret, fd_name);
+			// printf("flag:%d pid:%d flags:%d commandname:%s file_path:%s\n", flag, pid, flags, commandname, file_path);
 		} 
-		else if (strcmp(syscall_name[atoi(flag)], "close") == 0) {
-			uid = *( 2 + (unsigned int *)NLMSG_DATA(nlh) );
-			pid = *( 3 + (unsigned int *)NLMSG_DATA(nlh)  );
-			flags = *( 4 + (unsigned int *)NLMSG_DATA(nlh)  );   // 文件描述字
-			ret = *( 5 + (unsigned int *)NLMSG_DATA(nlh)  );
-			commandname = (char *)( 6 + (unsigned int *)NLMSG_DATA(nlh));
-			file_path = (char *)( 6 + TASK_COMM_LEN/4 + (unsigned int *)NLMSG_DATA(nlh));
+		else if (strcmp(syscall_name[flag], "close") == 0) {
+			uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh) );
+			pid = *( 2 + (unsigned int *)NLMSG_DATA(nlh)  );
+			flags = *( 3 + (unsigned int *)NLMSG_DATA(nlh)  );   // 文件描述字
+			ret = *( 4 + (unsigned int *)NLMSG_DATA(nlh)  );
+			commandname = (char *)( 5 + (unsigned int *)NLMSG_DATA(nlh));
+			file_path = (char *)( 5 + TASK_COMM_LEN/4 + (unsigned int *)NLMSG_DATA(nlh));
 			LogClose(commandname, uid, pid, file_path, flags, ret);
 			// printf("flag:%s pid:%d flags:%d commandname:%s file_path:%s\n", flag, pid, flags, commandname, file_path);
 		}

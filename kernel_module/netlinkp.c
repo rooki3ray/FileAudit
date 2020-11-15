@@ -79,10 +79,10 @@ void get_fullname(const char *pathname,char *fullname)
 	return;
 }
 
-
+// PATH_MAX=4096
 int AuditOpenat(struct pt_regs *regs, char *pathname, int ret)
 {
-    char *flag = "00";
+    int flag = 0;
     char commandname[TASK_COMM_LEN];
     char fullname[PATH_MAX];
     unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
@@ -93,6 +93,8 @@ int AuditOpenat(struct pt_regs *regs, char *pathname, int ret)
     memset(fullname, 0, PATH_MAX);
     memset(auditpath, 0, PATH_MAX);
 
+    // printk("pathmax: %ld", PATH_MAX);
+
     get_fullname(pathname, fullname);
     strcpy(auditpath, AUDITPATH);
 
@@ -102,21 +104,22 @@ int AuditOpenat(struct pt_regs *regs, char *pathname, int ret)
 
     strncpy(commandname,current->comm,TASK_COMM_LEN);
 
-    size = strlen(fullname) + 16 + TASK_COMM_LEN + 1 + strlen(flag);  // strlen(flag) == 2
+    size = strlen(fullname) + 16 + TASK_COMM_LEN + 1 + 4;
     buffer = kmalloc(size, 0);
     memset(buffer, 0, size);
 
     cred = current_cred();
-    strcpy( (char*)((int*)buffer), flag); 
-    *((int*)buffer + 2) = cred->uid.val;  //uid
-    *((int*)buffer + 3) = current->pid;
-    *((int*)buffer + 4) = regs->dx; // regs->dx: mode for open file
-    *((int*)buffer + 5) = ret;
-    strcpy( (char*)( 6 + (int*)buffer ), commandname);
-    strcpy( (char*)( 6 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
+    *((int*)buffer) = flag;
+    *((int*)buffer + 1) = cred->uid.val;  //uid
+    *((int*)buffer + 2) = current->pid;
+    *((int*)buffer + 3) = regs->dx; // regs->dx: mode for open file
+    *((int*)buffer + 4) = ret;
+    strcpy( (char*)( 5 + (int*)buffer ), commandname);
+    strcpy( (char*)( 5 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
 
-    // printk((char*)( (int*)buffer ));
-    // printk((char*)( 6 + (int*)buffer ));
+    // printk("flag: %d", *( (int*)buffer ));
+    // printk("commandname: %s", (char*)( 5 + (int*)buffer ));
+    // printk("fullname: %s", (char*)( 5 + TASK_COMM_LEN/4 +(int*)buffer ));
 
     netlink_sendmsg(buffer, size);
     return 0;
@@ -125,7 +128,7 @@ int AuditOpenat(struct pt_regs *regs, char *pathname, int ret)
 
 int AuditRead(struct pt_regs *regs, char *pathname, int ret)
 {
-    char *flag = "01";
+    int flag = 1;
     char commandname[TASK_COMM_LEN];
     char fullname[PATH_MAX];
     unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
@@ -166,23 +169,23 @@ int AuditRead(struct pt_regs *regs, char *pathname, int ret)
 
     strncpy(commandname,current->comm,TASK_COMM_LEN);
 
-    size = strlen(fd_name) + 16 + TASK_COMM_LEN + 1 + PATH_MAX + strlen(flag);
+    size = strlen(fd_name) + 16 + TASK_COMM_LEN + 1 + PATH_MAX + 4;
     buffer = kmalloc(size, 0);
     memset(buffer, 0, size);
 
     cred = current_cred();
-    strcpy( (char*)((int*)buffer), flag);
-    *((int*)buffer + 2) = cred->uid.val; ;  //uid
-    *((int*)buffer + 3) = current->pid;
-    *((int*)buffer + 4) = regs->dx; // regs->dx: read buf size
-    *((int*)buffer + 5) = ret;
-    strcpy( (char*)( 6 + (int*)buffer ), commandname);
-    strcpy( (char*)( 6 + TASK_COMM_LEN/4 + (int*)buffer ), fullname);
-    strcpy( (char*)( 6 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ), fd_name); //不确定是否可以
+    *((int*)buffer) = flag;
+    *((int*)buffer + 1) = cred->uid.val; ;  //uid
+    *((int*)buffer + 2) = current->pid;
+    *((int*)buffer + 3) = regs->dx; // regs->dx: read buf size
+    *((int*)buffer + 4) = ret;
+    strcpy( (char*)( 5 + (int*)buffer ), commandname);
+    strcpy( (char*)( 5 + TASK_COMM_LEN/4 + (int*)buffer ), fullname);
+    strcpy( (char*)( 5 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ), fd_name); //不确定是否可以
 
-    printk((char*)( 6 + (int*)buffer ));
-    printk( (char*)( 6 + TASK_COMM_LEN/4 + (int*)buffer ));
-    printk((char*)( 6 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ));
+    printk((char*)( 5 + (int*)buffer ));
+    printk( (char*)( 5 + TASK_COMM_LEN/4 + (int*)buffer ));
+    printk((char*)( 5 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ));
 
     netlink_sendmsg(buffer, size);
     return 0;
@@ -247,7 +250,7 @@ int AuditWrite(struct pt_regs *regs, char * pathname, int ret)
 
 int AuditClose(struct pt_regs *regs, char * pathname, int ret)
 {
-    char *flag = "03";
+    int flag = 3;
     char commandname[TASK_COMM_LEN];
     char fullname[PATH_MAX];
     unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
@@ -265,22 +268,22 @@ int AuditClose(struct pt_regs *regs, char * pathname, int ret)
     printk("close, Info: fullname is  %s \t; Auditpath is  %s", fullname, AUDITPATH);
     
     strncpy(commandname,current->comm,TASK_COMM_LEN);
-    size = strlen(fullname) + 16 + TASK_COMM_LEN + 1 + strlen(flag);
+    size = strlen(fullname) + 16 + TASK_COMM_LEN + 1 + 4;
     
     buffer = kmalloc(size, 0);
     memset(buffer, 0, size);
 
     cred = current_cred();
-    strcpy( (char*)( (int*)buffer ), flag);
-    *((int*)buffer + 2) = cred->uid.val; ;  //uid
-    *((int*)buffer + 3) = current->pid;
-    *((int*)buffer + 4) = regs->di; //文件描述字
-    *((int*)buffer + 5) = ret; //close结果
-    strcpy( (char*)( 6 + (int*)buffer ), commandname);
-    strcpy( (char*)( 6 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
+    *((int*)buffer) = flag;
+    *((int*)buffer + 1) = cred->uid.val; ;  //uid
+    *((int*)buffer + 2) = current->pid;
+    *((int*)buffer + 3) = regs->di; //文件描述字
+    *((int*)buffer + 4) = ret; //close结果
+    strcpy( (char*)( 5 + (int*)buffer ), commandname);
+    strcpy( (char*)( 5 + TASK_COMM_LEN/4 +(int*)buffer ), fullname);
     
-    printk((char*)( 6 + (int*)buffer ));
-    printk((char*)( 6 + TASK_COMM_LEN/4 +(int*)buffer));
+    printk((char*)( 5 + (int*)buffer ));
+    printk((char*)( 5 + TASK_COMM_LEN/4 +(int*)buffer));
     
     netlink_sendmsg(buffer, size);
     return 0;
