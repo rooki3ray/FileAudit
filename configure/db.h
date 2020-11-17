@@ -50,6 +50,19 @@ void create_table(char *filename)
           "READRESULT     TEXT );";
     sqlite3_exec(db, sql, 0, 0, &zErrMsg);
 
+    sql = "CREATE TABLE WRITE("  \
+          "ID INTEGER PRIMARY KEY AUTOINCREMENT ,"  \
+          "USERNAME       TEXT ,"  \
+          "UID            INT  ,"  \
+          "COMMANDNAME    TEXT ,"  \
+          "PID            INT  ,"  \
+          "LOGTIME        TEXT ,"  \
+          "FILEPATH       TEXT ,"  \
+          "WriteBufSize    INT  ,"  \
+          "FDNAME         TEXT ,"  \
+          "WRITERESULT     TEXT );";
+    sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+
     sql = "CREATE TABLE CLOSE("  \
           "ID INTEGER PRIMARY KEY AUTOINCREMENT ,"  \
           "USERNAME       TEXT ,"  \
