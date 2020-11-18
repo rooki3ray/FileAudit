@@ -9,7 +9,14 @@ static int sn = 0;
 
 void create_table(char *filename);
 void close_table(void);
-void insert_record(char *table, char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *opentype, char *openresult);
+void insert_open(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, char *type);
+void insert_read(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, int flags, char *result, char *fdname);
+void insert_write(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, int flags, char *result, char *fdname);
+void insert_close(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *type, char *result);
+void insert_kill(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int gid, int sig, int pid_);
+void insert_mkdir(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int mode);
+void insert_fchmodat(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int mod, int dirfd);
+void insert_fchownat(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int flags, int dirfd, int gid, int user_id);
 
 void create_table(char *filename)
 {
@@ -34,7 +41,7 @@ void create_table(char *filename)
           "LOGTIME        TEXT ,"  \
           "FILEPATH       TEXT ,"  \
           "OPENTYPE       TEXT ,"  \
-          "OPENRESULT     TEXT );";
+          "RESULT         TEXT );";
     sqlite3_exec(db, sql, 0, 0, &zErrMsg);
 
     sql = "CREATE TABLE READ("  \
@@ -47,7 +54,7 @@ void create_table(char *filename)
           "FILEPATH       TEXT ,"  \
           "ReadBufSize    INT  ,"  \
           "FDNAME         TEXT ,"  \
-          "READRESULT     TEXT );";
+          "RESULT         TEXT );";
     sqlite3_exec(db, sql, 0, 0, &zErrMsg);
 
     sql = "CREATE TABLE WRITE("  \
@@ -60,7 +67,7 @@ void create_table(char *filename)
           "FILEPATH       TEXT ,"  \
           "WriteBufSize    INT  ,"  \
           "FDNAME         TEXT ,"  \
-          "WRITERESULT     TEXT );";
+          "RESULT         TEXT );";
     sqlite3_exec(db, sql, 0, 0, &zErrMsg);
 
     sql = "CREATE TABLE CLOSE("  \
@@ -71,8 +78,62 @@ void create_table(char *filename)
           "PID            INT  ,"  \
           "LOGTIME        TEXT ,"  \
           "FILEPATH       TEXT ,"  \
-          "CLOSETYPE       TEXT ,"  \
-          "CLOSERESULT     TEXT );";
+          "CLOSETYPE      TEXT ,"  \
+          "RESULT         TEXT );";
+    sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+
+    sql = "CREATE TABLE KILL("  \
+          "ID INTEGER PRIMARY KEY AUTOINCREMENT ,"  \
+          "USERNAME       TEXT ,"  \
+          "UID            INT  ,"  \
+          "COMMANDNAME    TEXT ,"  \
+          "PID            INT  ,"  \
+          "GID            INT  ,"  \
+          "SIG            INT  ,"  \
+          "PID_KILLED     INT  ,"  \
+          "LOGTIME        TEXT ,"  \
+          "FILEPATH       TEXT ,"  \
+          "RESULT         TEXT );";
+    sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+
+    sql = "CREATE TABLE MKDIR("  \
+          "ID INTEGER PRIMARY KEY AUTOINCREMENT ,"  \
+          "USERNAME       TEXT ,"  \
+          "UID            INT  ,"  \
+          "COMMANDNAME    TEXT ,"  \
+          "PID            INT  ,"  \
+          "LOGTIME        TEXT ,"  \
+          "MODE           INT,"    \
+          "DIRPATH        TEXT,"   \
+          "RESULT         TEXT );";
+    sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+
+    sql = "CREATE TABLE FCHMODAT("  \
+          "ID INTEGER PRIMARY KEY AUTOINCREMENT ,"  \
+          "USERNAME       TEXT ,"  \
+          "UID            INT  ,"  \
+          "COMMANDNAME    TEXT ,"  \
+          "PID            INT  ,"  \
+          "MOD            INT  ,"  \
+          "DIRFD          INT  ,"  \
+          "LOGTIME        TEXT ,"  \
+          "FILEPATH       TEXT ,"  \
+          "RESULT         TEXT );";
+    sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+
+    sql = "CREATE TABLE FCHOWNAT("  \
+          "ID INTEGER PRIMARY KEY AUTOINCREMENT ,"  \
+          "USERNAME       TEXT ,"  \
+          "UID            INT  ,"  \
+          "COMMANDNAME    TEXT ,"  \
+          "PID            INT  ,"  \
+          "GID            INT  ,"  \
+          "FLAG           INT  ,"  \
+          "USERID         INT  ,"  \
+          "DIRFD          INT  ,"  \
+          "LOGTIME        TEXT ,"  \
+          "FILEPATH       TEXT ,"  \
+          "RESULT         TEXT );";
     sqlite3_exec(db, sql, 0, 0, &zErrMsg);
 }
 
@@ -82,18 +143,154 @@ void close_table(void)
 }
 
 
-void insert_record(char *table, char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *opentype, char *openresult)
+void insert_open(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, char *type)
 {
     char *sql = NULL;
     char *zErrMsg = NULL; 
-    sql = sqlite3_mprintf("INSERT INTO %s (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, OPENTYPE, OPENRESULT) VALUES (null, '%s', %d, '%s', %d, '%s', '%s', '%s', '%s')", table, username, uid, commandname, pid, logtime, filepath, opentype, openresult);
+    sql = sqlite3_mprintf("INSERT INTO OPEN (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, OPENTYPE, RESULT) " \
+        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', '%s', '%s')",
+        username, uid, commandname, pid, logtime, filepath, type, result);
+    
     int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
     // printf("%s", sql);
     if( rc != SQLITE_OK ){
         fprintf(stderr, "SQL ERROR: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
     } else {
-        fprintf(stdout, "Records created successfully\n");
+        fprintf(stdout, "OPEN records created successfully\n");
+    }
+    sqlite3_free(sql);
+}
+
+void insert_read(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, int flags, char *result, char *fdname)
+{
+    char *sql = NULL;
+    char *zErrMsg = NULL; 
+    sql = sqlite3_mprintf("INSERT INTO READ (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, ReadBufSize, FDNAME,RESULT) " \
+        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', %d, '%s', '%s')",
+        username, uid, commandname, pid, logtime, filepath, flags, fdname, result);
+    
+    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+    // printf("%s", sql);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL ERROR: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    } else {
+        fprintf(stdout, "READ records created successfully\n");
+    }
+    sqlite3_free(sql);
+}
+
+void insert_write(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, int flags, char *result, char *fdname)
+{
+    char *sql = NULL;
+    char *zErrMsg = NULL; 
+    sql = sqlite3_mprintf("INSERT INTO WRITE (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, WriteBufSize, FDNAME,RESULT) " \
+        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', %d, '%s', '%s')",
+        username, uid, commandname, pid, logtime, filepath, flags, fdname, result);
+    
+    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+    // printf("%s", sql);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL ERROR: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    } else {
+        fprintf(stdout, "WRITE records created successfully\n");
+    }
+    sqlite3_free(sql);
+}
+
+void insert_close(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *type, char *result)
+{
+    char *sql = NULL;
+    char *zErrMsg = NULL; 
+    sql = sqlite3_mprintf("INSERT INTO CLOSE (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, CLOSETYPE, RESULT) " \
+        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', '%s', '%s')",
+        username, uid, commandname, pid, logtime, filepath, type, result);
+    
+    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+    // printf("%s", sql);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL ERROR: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    } else {
+        fprintf(stdout, "CLOSE records created successfully\n");
+    }
+    sqlite3_free(sql);
+}
+
+void insert_kill(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int gid, int sig, int pid_)
+{
+    char *sql = NULL;
+    char *zErrMsg = NULL; 
+    sql = sqlite3_mprintf("INSERT INTO KILL (ID, USERNAME, UID, COMMANDNAME, PID, GID, SIG, PID_KILLED, LOGTIME, FILEPATH, RESULT) " \
+        "VALUES (null, '%s', %d, '%s', %d, %d, %d, %d, '%s', '%s', '%s')",
+        username, uid, commandname, pid, gid, sig, pid_, logtime, filepath, result);
+    
+    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+    // printf("%s", sql);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL ERROR: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    } else {
+        fprintf(stdout, "KILL records created successfully\n");
+    }
+    sqlite3_free(sql);
+}
+
+void insert_mkdir(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int mode)
+{
+    char *sql = NULL;
+    char *zErrMsg = NULL; 
+    sql = sqlite3_mprintf("INSERT INTO MKDIR (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, MODE, DIRPATH, RESULT) " \
+        "VALUES (null, '%s', %d, '%s', %d, '%s', %o, '%s', '%s')",
+        username, uid, commandname, pid, logtime, mode, filepath, result);
+    
+    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+    // printf("%s", sql);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL ERROR: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    } else {
+        fprintf(stdout, "MKDIR records created successfully\n");
+    }
+    sqlite3_free(sql);
+}
+
+void insert_fchmodat(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int mod, int dirfd)
+{
+    char *sql = NULL;
+    char *zErrMsg = NULL; 
+    sql = sqlite3_mprintf("INSERT INTO FCHMODAT (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, MODE, FILEPATH, RESULT, DIRFD) " \
+        "VALUES (null, '%s', %d, '%s', %d, '%s', %o, '%s', '%s', %d)",
+        username, uid, commandname, pid, logtime, mod, filepath, result, dirfd);
+    
+    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+    // printf("%s", sql);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL ERROR: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    } else {
+        fprintf(stdout, "FCHMODAT records created successfully\n");
+    }
+    sqlite3_free(sql);
+}
+
+void insert_fchownat(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int flags, int dirfd, int gid, int user_id)
+{
+    char *sql = NULL;
+    char *zErrMsg = NULL; 
+    sql = sqlite3_mprintf("INSERT INTO FCHOWNAT (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, RESULT, DIRFD, FLAG, GID, USERID) " \
+        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', '%s', %d, %d, %d, %d)",
+        username, uid, commandname, pid, logtime, filepath, result, dirfd, flags, gid, user_id);
+    
+    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+    // printf("%s", sql);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL ERROR: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    } else {
+        fprintf(stdout, "FCHOWNAT records created successfully\n");
     }
     sqlite3_free(sql);
 }
@@ -170,17 +367,17 @@ void delete_all(char * table)
     sqlite3_free(sql);
 }
 
-int test_table()
-{
-    char *filename = "test.db";
-    int i;
+// int test_table()
+// {
+//     char *filename = "test.db";
+//     int i;
 
-    create_table(filename);
+//     create_table(filename);
 
-    insert_record("OPEN", "username", 123, "commandname", 123, "2020", "filepath", "opentype", "openresult");
-  //  search_all("OPEN");
+//     insert_open("OPEN", "username", 123, "commandname", 123, "2020", "filepath", "opentype", "openresult");
+//   //  search_all("OPEN");
 
-    close_table();
+//     close_table();
 
-    return 0;
-}
+//     return 0;
+// }

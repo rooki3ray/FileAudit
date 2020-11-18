@@ -55,7 +55,7 @@ void LogOpen(char *commandname, int uid, int pid, char *file_path, int flags, in
 	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,opentype, result);
 	printf("OPEN username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\" opentype:%s result:%s\n",
 		username,uid,commandname,pid,logtime,file_path,opentype, result);
-    insert_record("OPEN", username, uid, commandname, pid, logtime, file_path, opentype, result);
+    insert_open(username, uid, commandname, pid, logtime, file_path, result, opentype);
 }
 
 void LogRead(char *commandname, int uid, int pid, char *file_path, int flags, int ret, char *fd_name) {
@@ -75,6 +75,7 @@ void LogRead(char *commandname, int uid, int pid, char *file_path, int flags, in
 
 	printf("READ username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  readBufSize:%d  result:%s  fd_name:%s\n",
 		username,uid,commandname,pid,logtime,file_path,flags,result,fd_name);
+	insert_read(username,uid,commandname,pid,logtime,file_path,flags,result,fd_name);
 }
 
 void LogWrite(char *commandname, int uid, int pid, char *file_path, int flags, int ret, char *fd_name) {
@@ -94,6 +95,7 @@ void LogWrite(char *commandname, int uid, int pid, char *file_path, int flags, i
 
 	printf("WRITE username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  writeBufSize:%d  result:%s  fd_name:%s\n",
 		username,uid,commandname,pid,logtime,file_path,flags,result,fd_name);
+	insert_write(username,uid,commandname,pid,logtime,file_path,flags,result,fd_name);
 }
 
 void LogClose(char *commandname, int uid, int pid, char *file_path, int flags, int ret) {
@@ -120,7 +122,7 @@ void LogClose(char *commandname, int uid, int pid, char *file_path, int flags, i
 	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
 	printf("CLOSE username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  closetype:%s  result:%s\n",
 		username,uid,commandname,pid,logtime,file_path,closetype, result);
-    // insert_record("OPEN", username, uid, commandname, pid, logtime, file_path, closetype, result);
+	insert_close(username,uid,commandname,pid,logtime,file_path,closetype, result);
 }
 
 void LogKill(char *commandname, int uid, int pid, char *file_path, int ret, int gid, int sig, int pid_) {
@@ -141,7 +143,7 @@ void LogKill(char *commandname, int uid, int pid, char *file_path, int ret, int 
 	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
 	printf("KILL username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  gid:%d  sig:%d  pid_:%d\n",
 		username,uid,commandname,pid,logtime,file_path, result, gid, sig, pid_);
-    // insert_record("OPEN", username, uid, commandname, pid, logtime, file_path, closetype, result);
+    insert_kill(username,uid,commandname,pid,logtime,file_path, result, gid, sig, pid_);
 }
 
 void LogMkdir(char *commandname, int uid, int pid, char *file_path, int mode, int ret) {
@@ -160,9 +162,9 @@ void LogMkdir(char *commandname, int uid, int pid, char *file_path, int mode, in
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
 
 	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
-	printf("MKDIR username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  mode:%d  ret:%d\n",
+	printf("MKDIR username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  mode:%o  ret:%d\n",
 		username,uid,commandname,pid,logtime,file_path, result, mode, ret);
-    // insert_record("OPEN", username, uid, commandname, pid, logtime, file_path, closetype, result);
+    insert_mkdir(username,uid,commandname,pid,logtime,file_path, result, mode);
 }
 
 void LogFchmodat(char *commandname, int uid, int pid, char *file_path, int mod, int ret, int dirfd) {
@@ -181,9 +183,9 @@ void LogFchmodat(char *commandname, int uid, int pid, char *file_path, int mod, 
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
 
 	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
-	printf("FCHMODAT username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  mod:%d  ret:%d  dirfd:%d\n",
+	printf("FCHMODAT username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  mod:%o  ret:%d  dirfd:%d\n",
 		username,uid,commandname,pid,logtime,file_path, result, mod, ret, dirfd);
-    // insert_record("OPEN", username, uid, commandname, pid, logtime, file_path, closetype, result);
+    insert_fchmodat(username,uid,commandname,pid,logtime,file_path, result, mod, dirfd);
 }
 
 void LogFchownat(char *commandname, int uid, int pid, char *file_path, int flags, int ret, int dirfd, int gid, int user_id) {
@@ -204,7 +206,7 @@ void LogFchownat(char *commandname, int uid, int pid, char *file_path, int flags
 	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
 	printf("FCHOWNAT username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  flags:%d  ret:%d  dirfd:%d  gid:%d  user_id:%d\n",
 		username,uid,commandname,pid,logtime,file_path, result, flags, ret, dirfd, gid, user_id);
-    // insert_record("OPEN", username, uid, commandname, pid, logtime, file_path, closetype, result);
+    insert_fchownat(username,uid,commandname,pid,logtime,file_path, result, flags, dirfd, gid, user_id);
 }
 
 
@@ -277,11 +279,11 @@ int main(int argc, char *argv[]){
     char *filename = "test.db";
     create_table(filename);
 
-    int count = 0;
+    // int count = 0;
 	//Loop to get message
 	while(1) {	//Read message from kernel
-		if (count > 20) break;
-        count++;
+		// if (count > 20) break;
+        // count++;
         unsigned int uid, pid,flags,ret;
 		unsigned int flag;
 		char * file_path;
@@ -355,7 +357,7 @@ int main(int argc, char *argv[]){
 			LogMkdir(commandname, uid, pid, file_path, mode, ret);
 		}
 		else if (strcmp(syscall_name[flag], "fchmodat") == 0) {
-			int mod;
+			int mod, dirfd;
 			uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh) );
 			pid = *( 2 + (unsigned int *)NLMSG_DATA(nlh) );
 			mod = *( 3 + (unsigned int *)NLMSG_DATA(nlh) );
