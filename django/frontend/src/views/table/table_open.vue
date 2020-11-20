@@ -182,7 +182,7 @@ export default {
   methods: {
     fetchData() {
       this.listLoading = true
-      getList(this.listQuery).then(response => {
+      getList("open", this.listQuery).then(response => {
         this.list = response.data.items
         this.total = response.data.total
 
@@ -291,7 +291,7 @@ export default {
       this.deleteQuery = {
         id: this.list[index]['id']
       }
-      deleteRecord(this.deleteQuery).then(response => {
+      deleteRecord("open_delete", this.deleteQuery).then(response => {
         this.list.splice(index, 1)
         // this.list = response.data.items
         // this.total = response.data.total

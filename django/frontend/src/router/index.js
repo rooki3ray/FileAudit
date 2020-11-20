@@ -69,10 +69,34 @@ export const constantRoutes = [
         meta: { title: 'Table', icon: 'table' }
       },
       {
-        path: 'complex-table',
-        name: 'Complex-Table',
-        component: () => import('@/views/table/complex-table'),
-        meta: { title: 'Complex-Table', icon: 'complex-table' }
+        path: 'table_open',
+        name: 'OPEN',
+        component: () => import('@/views/table/table_open'),
+        meta: { title: 'OPEN', icon: 'table' }
+      },
+      {
+        path: 'table_close',
+        name: 'CLOSE',
+        component: () => import('@/views/table/table_close'),
+        meta: { title: 'CLOSE', icon: 'table' }
+      },
+      {
+        path: 'table_read',
+        name: 'READ',
+        // component: () => import('@/views/table/table_open'),
+        meta: { title: 'READ', icon: 'table' }
+      },
+      {
+        path: 'table_write',
+        name: 'WRITE',
+        // component: () => import('@/views/table/table_open'),
+        meta: { title: 'WRITE', icon: 'table' }
+      },
+      {
+        path: 'table_mkdir',
+        name: 'MKDIR',
+        // component: () => import('@/views/table/table_open'),
+        meta: { title: 'MKDIR', icon: 'table' }
       },
       {
         path: 'tree',

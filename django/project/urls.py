@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', TemplateView.as_view(template_name="index.html")),
     path('table/open', views.table_open),
-    path('table/open_delete', views.table_open_delete)
+    path('table/open_delete', views.table_open_delete),
+    path('table/close', views.table_close),
     # path('', views.index),
 ]
