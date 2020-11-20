@@ -6,22 +6,29 @@ from django.http import FileResponse, HttpResponse, JsonResponse
 
 # Create your views here.
 
-def read_from_db(request, table):
+def read_db(request, table):
     page = int(request.GET["page"])
     limit = int(request.GET["limit"])
     sort = "ASC" if request.GET["sort"] == "+id" else "DESC"
+    filepath = request.GET.get("filepath", "")
 
-    print(page, limit, sort)
+    print(page, limit, sort, filepath)
 
     conn = sqlite3.connect('test.db')
     conn.text_factory = bytes
     cur = conn.cursor()
-    sql = "select * from {} order by id {} limit {}, {}".format(table, sort, limit * (page - 1), limit)
+    if not filepath: 
+        sql = """select * from {} order by id {} limit {}, {}""".format(table, sort, limit * (page - 1), limit)
+    else:
+        sql = """select * from {} where filepath like '%{}%' order by id {} limit {}, {}""".format(table, filepath, sort, limit * (page - 1), limit)
     res_list = cur.execute(sql)
-    return res_list, cur, conn
+    return res_list, cur, conn, filepath
 
-def exit_from_db(items, cur, conn, table):
-    sql = "select count(id) from {}".format(table)
+def exit_db(items, cur, conn, table, filepath=""):
+    if not filepath:
+        sql = """select count(id) from {}""".format(table)
+    else:
+        sql = """select count(id) from {} where filepath like '%{}%'""".format(table, filepath)
     total = cur.execute(sql).fetchall()[0][0]
     cur.close()
     conn.close()
@@ -95,7 +102,7 @@ def table_open_delete(request):
     return response
 
 def table_close(request):
-    res_list, cur, conn = read_from_db(request, "close")
+    res_list, cur, conn, filepath = read_db(request, "close")
     items = []
     # id username uid commandname pid logtime filepath opentype openresult 
     for res in res_list:
@@ -114,5 +121,5 @@ def table_close(request):
         d["result"] = res[8].decode()
         d['pid'] = res[4]
         items.append(d)
-    response = exit_from_db(items, cur, conn, "close")
+    response = exit_db(items, cur, conn, "close", filepath)
     return response
