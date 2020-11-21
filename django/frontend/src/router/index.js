@@ -62,12 +62,12 @@ export const constantRoutes = [
     name: 'Example',
     meta: { title: 'Example', icon: 'el-icon-s-help' },
     children: [
-      {
-        path: 'table',
-        name: 'Table',
-        component: () => import('@/views/table/index'),
-        meta: { title: 'Table', icon: 'table' }
-      },
+      // {
+      //   path: 'table',
+      //   name: 'Table',
+      //   component: () => import('@/views/table/index'),
+      //   meta: { title: 'Table', icon: 'table' }
+      // },
       {
         path: 'table_open',
         name: 'OPEN',
@@ -80,30 +80,36 @@ export const constantRoutes = [
         component: () => import('@/views/table/table_close'),
         meta: { title: 'CLOSE', icon: 'table' }
       },
-      {
-        path: 'table_read',
-        name: 'READ',
-        // component: () => import('@/views/table/table_open'),
-        meta: { title: 'READ', icon: 'table' }
-      },
-      {
-        path: 'table_write',
-        name: 'WRITE',
-        // component: () => import('@/views/table/table_open'),
-        meta: { title: 'WRITE', icon: 'table' }
-      },
+      // {
+      //   path: 'table_read',
+      //   name: 'READ',
+      //   component: () => import('@/views/table/table_read'),
+      //   meta: { title: 'READ', icon: 'table' }
+      // },
+      // {
+      //   path: 'table_write',
+      //   name: 'WRITE',
+      //   component: () => import('@/views/table/table_write'),
+      //   meta: { title: 'WRITE', icon: 'table' }
+      // },
       {
         path: 'table_mkdir',
         name: 'MKDIR',
-        // component: () => import('@/views/table/table_open'),
+        component: () => import('@/views/table/table_mkdir'),
         meta: { title: 'MKDIR', icon: 'table' }
       },
       {
-        path: 'tree',
-        name: 'Tree',
-        component: () => import('@/views/tree/index'),
-        meta: { title: 'Tree', icon: 'tree' }
-      }
+        path: 'table_kill',
+        name: 'KILL',
+        component: () => import('@/views/table/table_kill'),
+        meta: { title: 'KILL', icon: 'table' }
+      },
+      // {
+      //   path: 'tree',
+      //   name: 'Tree',
+      //   component: () => import('@/views/tree/index'),
+      //   meta: { title: 'Tree', icon: 'tree' }
+      // }
     ]
   },
 
