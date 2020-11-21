@@ -86,12 +86,10 @@ def table_open(request):
     # response["Access-Control-Allow-Headers"] = "Content-Type"  # 允许的headers
     return response
 
-def table_open_delete(request):
-    delete_id = int(request.GET["id"])
-    print(delete_id)
+def delete(table, delete_id):
     conn = sqlite3.connect('test.db')
     cur = conn.cursor()
-    sql = "delete from open where id={}".format(delete_id)
+    sql = "delete from {} where id={}".format(table, delete_id)
     cur.execute(sql)
     cur.close()
     conn.commit()
@@ -99,6 +97,12 @@ def table_open_delete(request):
     response = HttpResponse(json.dumps({}), content_type="application/json")
     response['Access-Control-Allow-Origin'] = '*'  # 允许所有的域名地址
     response["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS,PATCH,PUT"  # 允许的请求方式
+    return response
+
+def table_open_delete(request):
+    delete_id = int(request.GET["id"])
+    print(delete_id)
+    response = delete("open", delete_id)
     return response
 
 def table_close(request):
@@ -122,4 +126,75 @@ def table_close(request):
         d['pid'] = res[4]
         items.append(d)
     response = exit_db(items, cur, conn, "close", filepath)
+    return response
+
+
+def table_close_delete(request):
+    delete_id = int(request.GET["id"])
+    print(delete_id)
+    response = delete("close", delete_id)
+    return response
+
+def table_kill(request):
+    res_list, cur, conn, filepath = read_db(request, "kill")
+    items = []
+    # id username uid commandname pid logtime filepath opentype openresult 
+    for res in res_list:
+        d = dict()
+        d['id'] = res[0]
+        d['logtime'] = res[8].decode()
+        d['username'] = res[1].decode()
+        d['uid'] = res[2]
+        try:
+            d['filepath'] = res[9].decode()
+        except:
+            d['filepath'] = 'encode error'
+        d["content_short"] = "123"
+        d["content"] = "no"
+        d['command'] = res[3].decode()
+        d["result"] = res[10].decode()
+        d['pid'] = res[4]
+        d['sig'] = res[6]
+        d['pid_killed'] = res[7]
+        items.append(d)
+    response = exit_db(items, cur, conn, "kill", filepath)
+    return response
+
+
+def table_kill_delete(request):
+    delete_id = int(request.GET["id"])
+    print(delete_id)
+    response = delete("kill", delete_id)
+    return response
+
+def table_mkdir(request):
+    res_list, cur, conn, filepath = read_db(request, "mkdir")
+    items = []
+    # id username uid commandname pid logtime filepath opentype openresult
+    for res in res_list:
+        d = dict()
+        d['id'] = res[0]
+        d['logtime'] = res[5].decode()
+        d['username'] = res[1].decode()
+        d['uid'] = res[2]
+        try:
+            d['filepath'] = res[9].decode()
+        except:
+            d['filepath'] = 'encode error'
+        d["content_short"] = "123"
+        d["content"] = "no"
+        d['command'] = res[3].decode()
+        d["result"] = res[8].decode()
+        d['pid'] = res[4]
+        d['mode'] = res[6]
+        d['dirpath'] = res[7].decode()
+        items.append(d)
+    response = exit_db(items, cur, conn, "mkdir", filepath)
+    return response
+
+
+def table_mkdir_delete(request):
+    delete_id = int(request.GET["id"])
+    print(delete_id)
+    response = delete("mkdir", delete_id)
     return response
