@@ -29,8 +29,6 @@ struct iovec iov;
 // distinguish log from netlink socket
 char *syscall_name[] = {"open", "read", "write", "close", "kill", "mkdir", "fchmodat", "fchownat", "unlinkat"}; 
 
-FILE *logfile;
-
 void LogOpen(char *commandname, int uid, int pid, char *file_path, int flags, int ret);
 void LogRead(char *commandname, int uid, int pid, char *file_path, int ret);
 void LogWrite(char *commandname, int uid, int pid, char *file_path, int ret);
@@ -51,7 +49,6 @@ void LogOpen(char *commandname, int uid, int pid, char *file_path, int flags, in
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
-	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
 	strcpy(username,pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
@@ -62,7 +59,6 @@ void LogOpen(char *commandname, int uid, int pid, char *file_path, int flags, in
 	else if (flags & O_RDWR ) strcpy(opentype, "Read/Write");
 	else strcpy(opentype,"other");
 
-	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,opentype, result);
 	printf("OPEN username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\" opentype:%s result:%s\n",
 		username,uid,commandname,pid,logtime,file_path,opentype, result);
     insert_open(username, uid, commandname, pid, logtime, file_path, result, opentype);
@@ -78,7 +74,6 @@ void LogRead(char *commandname, int uid, int pid, char *file_path, int ret) {
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
-	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
 	strcpy(username, pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
@@ -98,7 +93,6 @@ void LogWrite(char *commandname, int uid, int pid, char *file_path, int ret) {
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
-	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
 	strcpy(username, pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
@@ -118,7 +112,6 @@ void LogClose(char *commandname, int uid, int pid, char *file_path, int flags, i
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
-	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
 	strcpy(username,pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
@@ -129,7 +122,6 @@ void LogClose(char *commandname, int uid, int pid, char *file_path, int flags, i
 	else if (flags & O_RDWR ) strcpy(closetype, "Read/Write");
 	else strcpy(closetype,"other");
 
-	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
 	printf("CLOSE username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  closetype:%s  result:%s\n",
 		username,uid,commandname,pid,logtime,file_path,closetype, result);
 	insert_close(username,uid,commandname,pid,logtime,file_path,closetype, result);
@@ -145,12 +137,10 @@ void LogKill(char *commandname, int uid, int pid, char *file_path, int ret, int 
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
-	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
 	strcpy(username,pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
 
-	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
 	printf("KILL username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  gid:%d  sig:%d  pid_:%d\n",
 		username,uid,commandname,pid,logtime,file_path, result, gid, sig, pid_);
     insert_kill(username,uid,commandname,pid,logtime,file_path, result, gid, sig, pid_);
@@ -166,12 +156,10 @@ void LogMkdir(char *commandname, int uid, int pid, char *file_path, int mode, in
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
-	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
 	strcpy(username,pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
 
-	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
 	printf("MKDIR username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  mode:%o  ret:%d\n",
 		username,uid,commandname,pid,logtime,file_path, result, mode, ret);
     insert_mkdir(username,uid,commandname,pid,logtime,file_path, result, mode);
@@ -187,12 +175,10 @@ void LogFchmodat(char *commandname, int uid, int pid, char *file_path, int mod, 
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
-	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
 	strcpy(username,pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
 
-	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
 	printf("FCHMODAT username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  mod:%o  ret:%d  dirfd:%d\n",
 		username,uid,commandname,pid,logtime,file_path, result, mod, ret, dirfd);
     insert_fchmodat(username,uid,commandname,pid,logtime,file_path, result, mod, dirfd);
@@ -208,12 +194,10 @@ void LogFchownat(char *commandname, int uid, int pid, char *file_path, int flags
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
-	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
 	strcpy(username,pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
 
-	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
 	printf("FCHOWNAT username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  flags:%d  ret:%d  dirfd:%d  gid:%d  user_id:%d\n",
 		username,uid,commandname,pid,logtime,file_path, result, flags, ret, dirfd, gid, user_id);
     insert_fchownat(username,uid,commandname,pid,logtime,file_path, result, flags, dirfd, gid, user_id);
@@ -230,12 +214,10 @@ void LogUnlinkat(char *commandname, int uid, int pid, char *file_path, int mod, 
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
-	if (logfile == NULL)	return;
 	pwinfo = getpwuid(uid);
 	strcpy(username,pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
 
-	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
 	printf("UNLINKAT username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  mod:%o  ret:%d  dirfd:%d\n",
 		username,uid,commandname,pid,logtime,file_path, result, mod, ret, dirfd);
     insert_unlinkat(username,uid,commandname,pid,logtime,file_path, result, mod, dirfd);
@@ -276,8 +258,6 @@ void killdeal_func()
 {
 	printf("The process is killed! \n");
 	close(sock_fd);
-	if (logfile != NULL)
-		fclose(logfile);
 	if (nlh != NULL)
 	 	free(nlh);
 	exit(0);
@@ -301,12 +281,6 @@ int main(int argc, char *argv[]){
 
     sendpid(getpid());
 
-	/* open the log file at the begining of daemon, in case of this operation causes deadlock */
-	logfile=fopen(logpath, "w+");
-	if (logfile == NULL) {
-		printf("Waring: can not create log file\n");
-		exit(1);
-	}
 
     char *filename = "test.db";
     create_table(filename);
@@ -424,7 +398,6 @@ int main(int argc, char *argv[]){
 	}
 	close(sock_fd);
 	free(nlh);
-	fclose(logfile);
     close_table();
 	return 0;
 }

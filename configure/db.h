@@ -182,7 +182,7 @@ void insert_read(char *username, int uid, char *commandname, int pid, char *logt
     char *sql = NULL;
     char *zErrMsg = NULL; 
     sql = sqlite3_mprintf("INSERT INTO READ (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, RESULT) " \
-        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', '%s',)",
+        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', '%s')",
         username, uid, commandname, pid, logtime, filepath, result);
 
     insert_record(sql);
@@ -194,8 +194,8 @@ void insert_write(char *username, int uid, char *commandname, int pid, char *log
     char *sql = NULL;
     char *zErrMsg = NULL; 
     sql = sqlite3_mprintf("INSERT INTO WRITE (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, RESULT) " \
-        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', %d, '%s', '%s')",
-        username, uid, commandname, pid, logtime, filepath,  result);
+        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', '%s')",
+        username, uid, commandname, pid, logtime, filepath, result);
     
     insert_record(sql);
     sqlite3_free(sql);
