@@ -167,6 +167,7 @@ asmlinkage long hacked_fchmodat(struct pt_regs *regs)
 	char buffer[PATH_MAX];
     long nbytes;
   	nbytes = strncpy_from_user(buffer, (char*)regs->si, PATH_MAX);
+	printk("buffer: %s ", buffer);
 	ret = orig_fchmodat(regs);
 	AuditFchmodat(regs, buffer, ret);
 	return ret;
@@ -189,24 +190,24 @@ static int __init audit_init(void)
 	sys_call_table = get_sys_call_table();
 	printk("Info: sys_call_table found at %lx\n",(unsigned long)sys_call_table) ;
 
-    // Hook Sys Call Openat
-	orig_openat = (orig_openat_t) sys_call_table[__NR_openat];
-	printk("Info:  orginal openat:%lx\n",(long)orig_openat);
-	// Hook Sys Call Read
+    // // Hook Sys Call Openat
+	// orig_openat = (orig_openat_t) sys_call_table[__NR_openat];
+	// printk("Info:  orginal openat:%lx\n",(long)orig_openat);
+	// // Hook Sys Call Read
 	// orig_read = (orig_read_t) sys_call_table[__NR_read];
 	// printk("Info:  orginal read:%lx\n",(long)orig_read);
-	// Hook Sys Call Close
-	orig_close = (orig_close_t) sys_call_table[__NR_close];
-	printk("Info:  orginal close:%lx\n",(long)orig_close);
+	// // Hook Sys Call Close
+	// orig_close = (orig_close_t) sys_call_table[__NR_close];
+	// printk("Info:  orginal close:%lx\n",(long)orig_close);
 	// Hook Sys Call write
 	// orig_write = (orig_write_t) sys_call_table[__NR_write];
 	// printk("Info:  orginal write:%lx\n",(long)orig_write);
-	// Hook Sys Call kill
-	orig_kill = (orig_kill_t) sys_call_table[__NR_kill];
-	printk("Info:  orginal kill:%lx\n",(long)orig_kill);
-	// Hook Sys Call mkdir
-	orig_mkdir = (orig_mkdir_t) sys_call_table[__NR_mkdir];
-	printk("Info:  orginal mkdir:%lx\n",(long)orig_mkdir);
+	// // Hook Sys Call kill
+	// orig_kill = (orig_kill_t) sys_call_table[__NR_kill];
+	// printk("Info:  orginal kill:%lx\n",(long)orig_kill);
+	// // Hook Sys Call mkdir
+	// orig_mkdir = (orig_mkdir_t) sys_call_table[__NR_mkdir];
+	// printk("Info:  orginal mkdir:%lx\n",(long)orig_mkdir);
 	// Hook Sys Call fchmodat
 	orig_fchmodat = (orig_fchmodat_t) sys_call_table[__NR_fchmodat];
 	printk("Info:  orginal fchmodat:%lx\n",(long)orig_fchmodat);
@@ -219,12 +220,12 @@ static int __init audit_init(void)
 	set_pte_atomic(pte, pte_mkwrite(*pte));
 	printk("Info: Disable write-protection of page with sys_call_table\n");
 
-	sys_call_table[__NR_openat] = (demo_sys_call_ptr_t) hacked_openat;
+	// sys_call_table[__NR_openat] = (demo_sys_call_ptr_t) hacked_openat;
 	// sys_call_table[__NR_read] = (demo_sys_call_ptr_t) hacked_read;
-	sys_call_table[__NR_close] = (demo_sys_call_ptr_t) hacked_close;
+	// sys_call_table[__NR_close] = (demo_sys_call_ptr_t) hacked_close;
 	// sys_call_table[__NR_write] = (demo_sys_call_ptr_t) hacked_write;
-	sys_call_table[__NR_kill] = (demo_sys_call_ptr_t) hacked_kill;
-	sys_call_table[__NR_mkdir] = (demo_sys_call_ptr_t) hacked_mkdir;
+	// sys_call_table[__NR_kill] = (demo_sys_call_ptr_t) hacked_kill;
+	// sys_call_table[__NR_mkdir] = (demo_sys_call_ptr_t) hacked_mkdir;
 	sys_call_table[__NR_fchmodat] = (demo_sys_call_ptr_t) hacked_fchmodat;
 	sys_call_table[__NR_fchownat] = (demo_sys_call_ptr_t) hacked_fchownat;
 
@@ -240,12 +241,12 @@ static void __exit audit_exit(void)
 {
     pte = lookup_address((unsigned long) sys_call_table, &level);
     set_pte_atomic(pte, pte_mkwrite(*pte));
-	sys_call_table[__NR_openat] = (demo_sys_call_ptr_t)orig_openat;
+	// sys_call_table[__NR_openat] = (demo_sys_call_ptr_t)orig_openat;
 	// sys_call_table[__NR_read] = (demo_sys_call_ptr_t)orig_read;
-	sys_call_table[__NR_close] = (demo_sys_call_ptr_t)orig_close;
-	// sys_call_table[__NR_write] = (demo_sys_call_ptr_t)orig_write;
-	sys_call_table[__NR_kill] = (demo_sys_call_ptr_t)orig_kill;
-	sys_call_table[__NR_mkdir] = (demo_sys_call_ptr_t)orig_mkdir;
+	// sys_call_table[__NR_close] = (demo_sys_call_ptr_t)orig_close;
+	// // sys_call_table[__NR_write] = (demo_sys_call_ptr_t)orig_write;
+	// sys_call_table[__NR_kill] = (demo_sys_call_ptr_t)orig_kill;
+	// sys_call_table[__NR_mkdir] = (demo_sys_call_ptr_t)orig_mkdir;
 	sys_call_table[__NR_fchmodat] = (demo_sys_call_ptr_t)orig_fchmodat;
 	sys_call_table[__NR_fchownat] = (demo_sys_call_ptr_t)orig_fchownat;
 

@@ -144,7 +144,6 @@ int AuditRead(struct pt_regs *regs, char *pathname, int ret)
     strcpy(auditpath, AUDITPATH);
     if (strncmp(fullname, auditpath, strlen(auditpath)) != 0)  
         return 1;
-    printk("read, Info: fullname is  %s \t; Auditpath is  %s ; fd is %ld", fullname, AUDITPATH, regs->di);
 
     char ac_Buf[128];
     struct file * pst_File = NULL;
@@ -169,7 +168,15 @@ int AuditRead(struct pt_regs *regs, char *pathname, int ret)
 
     strncpy(commandname,current->comm,TASK_COMM_LEN);
 
-    size = strlen(fd_name) + 16 + TASK_COMM_LEN + 1 + PATH_MAX + 4;
+    if(fd_name)
+    {
+        size = strlen(fd_name) + 16 + TASK_COMM_LEN + 1 + PATH_MAX + 4;
+    }
+    else
+    {
+        size = strlen("fd_name not found") + 16 + TASK_COMM_LEN + 1 + PATH_MAX + 4;
+    }
+    
     buffer = kmalloc(size, 0);
     memset(buffer, 0, size);
 
@@ -181,11 +188,16 @@ int AuditRead(struct pt_regs *regs, char *pathname, int ret)
     *((int*)buffer + 4) = ret;
     strcpy( (char*)( 5 + (int*)buffer ), commandname);
     strcpy( (char*)( 5 + TASK_COMM_LEN/4 + (int*)buffer ), fullname);
-    strcpy( (char*)( 5 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ), fd_name); //不确定是否可以
-
-    // printk((char*)( 5 + (int*)buffer ));
-    // printk( (char*)( 5 + TASK_COMM_LEN/4 + (int*)buffer ));
-    // printk((char*)( 5 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ));
+    if(fd_name)
+    {
+        strcpy( (char*)( 5 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ), fd_name);
+        printk("fd_name: %s", fd_name);
+    }
+    else
+    {
+        strcpy( (char*)( 5 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ), "fd_name not found");
+        printk("fd_name not found");
+    }
 
     netlink_sendmsg(buffer, size);
     return 0;
@@ -389,7 +401,15 @@ int AuditFchmodat(struct pt_regs *regs, char * pathname, int ret)
     memset(fullname, 0, PATH_MAX);
     memset(auditpath, 0, PATH_MAX);
 
-    strcpy(fullname, pathname);
+    if(pathname == NULL)
+    {
+        printk("Null");
+    }else
+    {
+        printk("pathname is %s", pathname);
+    }
+    
+    get_fullname(pathname, fullname);
     strcpy(auditpath, AUDITPATH);
     if (strncmp(fullname, auditpath, strlen(auditpath)) != 0)  
         return 1;

@@ -64,7 +64,7 @@ void LogRead(char *commandname, int uid, int pid, char *file_path, int flags, in
 	struct passwd *pwinfo;
 	char result[10];
 
-	if (ret > 0) strcpy(result,"success");
+	if (ret >= 0) strcpy(result,"success");
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
@@ -194,7 +194,7 @@ void LogFchownat(char *commandname, int uid, int pid, char *file_path, int flags
 	struct passwd *pwinfo;
 	char result[10];
 
-	if (ret > 0) strcpy(result,"success");
+	if (ret >= 0) strcpy(result,"success");
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
@@ -279,11 +279,11 @@ int main(int argc, char *argv[]){
     char *filename = "test.db";
     create_table(filename);
 
-    // int count = 0;
-	//Loop to get message
+    int count = 0;
+	// Loop to get message
 	while(1) {	//Read message from kernel
-		// if (count > 20) break;
-        // count++;
+		if (count > 20) break;
+        count++;
         unsigned int uid, pid,flags,ret;
 		unsigned int flag;
 		char * file_path;
@@ -310,8 +310,11 @@ int main(int argc, char *argv[]){
 			commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh));
 			file_path = (char *)( 5 + TASK_COMM_LEN/4 + (int *)NLMSG_DATA(nlh));
 			fd_name = (char *)(5 + TASK_COMM_LEN/4 + MAX_LENGTH/4+ (int*)NLMSG_DATA(nlh) );
+			
+			printf("flag:%d pid:%d flags:%d commandname:%s file_path:%s fd:%s\n", flag, pid, flags, commandname, file_path, fd_name);
+
 			LogRead(commandname, uid, pid, file_path, flags, ret, fd_name);
-			// printf("flag:%d pid:%d flags:%d commandname:%s file_path:%s\n", flag, pid, flags, commandname, file_path);
+			
 		} 
 		else if (strcmp(syscall_name[flag], "write") == 0) {
 			char *fd_name;
