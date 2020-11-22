@@ -104,6 +104,24 @@ export const constantRoutes = [
         component: () => import('@/views/table/table_kill'),
         meta: { title: 'KILL', icon: 'table' }
       },
+      {
+        path: 'table_fchmodat',
+        name: 'FCHMODAT',
+        component: () => import('@/views/table/table_fchmodat'),
+        meta: { title: 'FCHMODAT', icon: 'table' }
+      },
+      {
+        path: 'table_fchownat',
+        name: 'FCHOWNAT',
+        component: () => import('@/views/table/table_fchownat'),
+        meta: { title: 'FCHOWNAT', icon: 'table' }
+      },
+      {
+        path: 'table_unlinkat',
+        name: 'UNLINKAT',
+        component: () => import('@/views/table/table_unlinkat'),
+        meta: { title: 'UNLINKAT', icon: 'table' }
+      },
       // {
       //   path: 'tree',
       //   name: 'Tree',
