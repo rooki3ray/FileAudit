@@ -31,6 +31,16 @@ char *syscall_name[] = {"open", "read", "write", "close", "kill", "mkdir", "fchm
 
 FILE *logfile;
 
+void LogOpen(char *commandname, int uid, int pid, char *file_path, int flags, int ret);
+void LogRead(char *commandname, int uid, int pid, char *file_path, int ret);
+void LogWrite(char *commandname, int uid, int pid, char *file_path, int ret);
+void LogClose(char *commandname, int uid, int pid, char *file_path, int flags, int ret);
+void LogKill(char *commandname, int uid, int pid, char *file_path, int ret, int gid, int sig, int pid_);
+void LogMkdir(char *commandname, int uid, int pid, char *file_path, int mode, int ret);
+void LogFchmodat(char *commandname, int uid, int pid, char *file_path, int mod, int ret, int dirfd);
+void LogFchownat(char *commandname, int uid, int pid, char *file_path, int flags, int ret, int dirfd, int gid, int user_id);
+void LogUnlinkat(char *commandname, int uid, int pid, char *file_path, int mod, int ret, int dirfd);
+
 void LogOpen(char *commandname, int uid, int pid, char *file_path, int flags, int ret) {
 	char logtime[64];
 	char username[32];
@@ -58,7 +68,7 @@ void LogOpen(char *commandname, int uid, int pid, char *file_path, int flags, in
     insert_open(username, uid, commandname, pid, logtime, file_path, result, opentype);
 }
 
-void LogRead(char *commandname, int uid, int pid, char *file_path, int flags, int ret, char *fd_name) {
+void LogRead(char *commandname, int uid, int pid, char *file_path, int ret) {
 	char logtime[64];
 	char username[32];
 	struct passwd *pwinfo;
@@ -73,12 +83,12 @@ void LogRead(char *commandname, int uid, int pid, char *file_path, int flags, in
 	strcpy(username, pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
 
-	printf("READ username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  readBufSize:%d  result:%s  fd_name:%s\n",
-		username,uid,commandname,pid,logtime,file_path,flags,result,fd_name);
-	insert_read(username,uid,commandname,pid,logtime,file_path,flags,result,fd_name);
+	printf("READ username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s\n",
+		username,uid,commandname,pid,logtime,file_path,result);
+	insert_read(username,uid,commandname,pid,logtime,file_path,result);
 }
 
-void LogWrite(char *commandname, int uid, int pid, char *file_path, int flags, int ret, char *fd_name) {
+void LogWrite(char *commandname, int uid, int pid, char *file_path, int ret) {
 	char logtime[64];
 	char username[32];
 	struct passwd *pwinfo;
@@ -93,9 +103,9 @@ void LogWrite(char *commandname, int uid, int pid, char *file_path, int flags, i
 	strcpy(username, pwinfo->pw_name);
 	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
 
-	printf("WRITE username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  writeBufSize:%d  result:%s  fd_name:%s\n",
-		username,uid,commandname,pid,logtime,file_path,flags,result,fd_name);
-	insert_write(username,uid,commandname,pid,logtime,file_path,flags,result,fd_name);
+	printf("WRITE username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\" result:%s\n",
+		username,uid,commandname,pid,logtime,file_path,result);
+	insert_write(username,uid,commandname,pid,logtime,file_path,result);
 }
 
 void LogClose(char *commandname, int uid, int pid, char *file_path, int flags, int ret) {
@@ -324,36 +334,24 @@ int main(int argc, char *argv[]){
 			LogOpen(commandname, uid, pid, file_path, flags, ret);
 		} 
 		else if (strcmp(syscall_name[flag], "read") == 0) {
-			char *fd_name = "fd_name not found";
-			uid = *( 1 + (int *)NLMSG_DATA(nlh) );
-			printf("uid : %d\n", uid);
+			uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh) );
 			pid = *( 2 + (int *)NLMSG_DATA(nlh)  );
-			printf("pid : %d\n", pid);
-			flags = *( 3 + (int *)NLMSG_DATA(nlh)  );   // read buf size
-			printf("flag : %d\n", flags);
+			flags = *( 3 + (int *)NLMSG_DATA(nlh)  );
 			ret = *( 4 + (int *)NLMSG_DATA(nlh)  );
-			printf("ret : %d\n", ret);
 			commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh));
-			printf("commandname : %s\n", commandname);
 			file_path = (char *)( 5 + TASK_COMM_LEN/4 + (int *)NLMSG_DATA(nlh));
-			printf("file_path : %s\n", file_path);
-			fd_name = (char *)(5 + TASK_COMM_LEN/4 + MAX_LENGTH/4+ (int*)NLMSG_DATA(nlh) );
-			printf("fd_name : %s\n", fd_name);
-			printf("\n\n");
-
-			//LogRead(commandname, uid, pid, file_path, flags, ret, fd_name);
+			LogRead(commandname, uid, pid, file_path, ret);
 			
 		} 
 		else if (strcmp(syscall_name[flag], "write") == 0) {
-			char *fd_name = "fd_name not found";
 			uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh) );
-			pid = *( 2 + (unsigned int *)NLMSG_DATA(nlh)  );
-			flags = *( 3 + (unsigned int *)NLMSG_DATA(nlh)  );   // write buf size
-			ret = *( 4 + (unsigned int *)NLMSG_DATA(nlh)  );
+			pid = *( 2 + (int *)NLMSG_DATA(nlh)  );
+			flags = *( 3 + (int *)NLMSG_DATA(nlh)  );
+			ret = *( 4 + (int *)NLMSG_DATA(nlh)  );
 			commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh));
 			file_path = (char *)( 5 + TASK_COMM_LEN/4 + (int *)NLMSG_DATA(nlh));
-			fd_name = (char *)(5 + TASK_COMM_LEN/4 + MAX_LENGTH/4+ (int*)NLMSG_DATA(nlh) );
-			LogWrite(commandname, uid, pid, file_path, flags, ret, fd_name);
+			LogWrite(commandname, uid, pid, file_path, ret);
+
 		}
 		else if (strcmp(syscall_name[flag], "close") == 0) {
 			uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh) );

@@ -9,8 +9,8 @@ void create_table(char *filename);
 void close_table(void);
 void insert_record(char *sql);
 void insert_open(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, char *type);
-void insert_read(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, int flags, char *result, char *fdname);
-void insert_write(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, int flags, char *result, char *fdname);
+void insert_read(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result);
+void insert_write(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result);
 void insert_close(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *type, char *result);
 void insert_kill(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int gid, int sig, int pid_);
 void insert_mkdir(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int mode);
@@ -51,8 +51,6 @@ void create_table(char *filename)
           "PID            INT  ,"  \
           "LOGTIME        TEXT ,"  \
           "FILEPATH       TEXT ,"  \
-          "ReadBufSize    INT  ,"  \
-          "FDNAME         TEXT ,"  \
           "RESULT         TEXT );";
     sqlite3_exec(db, sql, 0, 0, &zErrMsg);
 
@@ -64,8 +62,6 @@ void create_table(char *filename)
           "PID            INT  ,"  \
           "LOGTIME        TEXT ,"  \
           "FILEPATH       TEXT ,"  \
-          "WriteBufSize    INT  ,"  \
-          "FDNAME         TEXT ,"  \
           "RESULT         TEXT );";
     sqlite3_exec(db, sql, 0, 0, &zErrMsg);
 
@@ -181,25 +177,25 @@ void insert_open(char *username, int uid, char *commandname, int pid, char *logt
     sqlite3_free(sql);
 }
 
-void insert_read(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, int flags, char *result, char *fdname)
+void insert_read(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result)
 {
     char *sql = NULL;
     char *zErrMsg = NULL; 
-    sql = sqlite3_mprintf("INSERT INTO READ (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, ReadBufSize, FDNAME,RESULT) " \
-        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', %d, '%s', '%s')",
-        username, uid, commandname, pid, logtime, filepath, flags, fdname, result);
+    sql = sqlite3_mprintf("INSERT INTO READ (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, RESULT) " \
+        "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', '%s',)",
+        username, uid, commandname, pid, logtime, filepath, result);
 
     insert_record(sql);
     sqlite3_free(sql);
 }
 
-void insert_write(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, int flags, char *result, char *fdname)
+void insert_write(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result)
 {
     char *sql = NULL;
     char *zErrMsg = NULL; 
-    sql = sqlite3_mprintf("INSERT INTO WRITE (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, WriteBufSize, FDNAME,RESULT) " \
+    sql = sqlite3_mprintf("INSERT INTO WRITE (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, FILEPATH, RESULT) " \
         "VALUES (null, '%s', %d, '%s', %d, '%s', '%s', %d, '%s', '%s')",
-        username, uid, commandname, pid, logtime, filepath, flags, fdname, result);
+        username, uid, commandname, pid, logtime, filepath,  result);
     
     insert_record(sql);
     sqlite3_free(sql);
