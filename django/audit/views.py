@@ -58,18 +58,18 @@ def table_open(request):
     for res in res_list:
         d = dict()
         d['id'] = res[0]
-        d['logtime'] = res[5].decode()
         d['username'] = res[1].decode()
         d['uid'] = res[2]
+        d['command'] = res[3].decode()
+        d['pid'] = res[4]
+        d['logtime'] = res[5].decode()
         try:
             d['filepath'] = res[6].decode()
         except:
             d['filepath'] = 'encode error'
+        d["result"] = res[8].decode()
         d["content_short"] = "123"
         d["content"] = "no"
-        d['command'] = res[3].decode()
-        d["result"] = res[8].decode()
-        d['pid'] = res[4]
         items.append(d)
 
     sql = "select count(id) from open"
@@ -112,18 +112,19 @@ def table_close(request):
     for res in res_list:
         d = dict()
         d['id'] = res[0]
-        d['logtime'] = res[5].decode()
+
         d['username'] = res[1].decode()
         d['uid'] = res[2]
+        d['command'] = res[3].decode()
+        d['pid'] = res[4]
+        d['logtime'] = res[5].decode()
         try:
             d['filepath'] = res[6].decode()
         except:
             d['filepath'] = 'encode error'
+        d["result"] = res[8].decode()
         d["content_short"] = "123"
         d["content"] = "no"
-        d['command'] = res[3].decode()
-        d["result"] = res[8].decode()
-        d['pid'] = res[4]
         items.append(d)
     response = exit_db(items, cur, conn, "close", filepath)
     return response
@@ -142,20 +143,16 @@ def table_kill(request):
     for res in res_list:
         d = dict()
         d['id'] = res[0]
-        d['logtime'] = res[8].decode()
         d['username'] = res[1].decode()
         d['uid'] = res[2]
-        try:
-            d['filepath'] = res[9].decode()
-        except:
-            d['filepath'] = 'encode error'
-        d["content_short"] = "123"
-        d["content"] = "no"
         d['command'] = res[3].decode()
-        d["result"] = res[10].decode()
         d['pid'] = res[4]
         d['sig'] = res[6]
         d['pid_killed'] = res[7]
+        d['logtime'] = res[8].decode()
+        d["result"] = res[10].decode()
+        d["content_short"] = "123"
+        d["content"] = "no"
         items.append(d)
     response = exit_db(items, cur, conn, "kill", filepath)
     return response
@@ -174,20 +171,18 @@ def table_mkdir(request):
     for res in res_list:
         d = dict()
         d['id'] = res[0]
-        d['logtime'] = res[5].decode()
         d['username'] = res[1].decode()
         d['uid'] = res[2]
-        try:
-            d['filepath'] = res[9].decode()
-        except:
-            d['filepath'] = 'encode error'
-        d["content_short"] = "123"
-        d["content"] = "no"
         d['command'] = res[3].decode()
-        d["result"] = res[8].decode()
         d['pid'] = res[4]
+        d['logtime'] = res[5].decode()
         d['mode'] = res[6]
         d['dirpath'] = res[7].decode()
+        d["result"] = res[8].decode()
+        d["content_short"] = "123"
+        d["content"] = "no"
+
+
         items.append(d)
     response = exit_db(items, cur, conn, "mkdir", filepath)
     return response
@@ -197,4 +192,96 @@ def table_mkdir_delete(request):
     delete_id = int(request.GET["id"])
     print(delete_id)
     response = delete("mkdir", delete_id)
+    return response
+
+
+def table_fchmodat(request):
+    res_list, cur, conn, filepath = read_db(request, "fchmodat")
+    items = []
+    # id username uid commandname pid logtime filepath opentype openresult
+    for res in res_list:
+        d = dict()
+        d['id'] = res[0]
+        d['username'] = res[1].decode()
+        d['uid'] = res[2]
+        d['command'] = res[3].decode()
+        d['pid'] = res[4]
+        d['mode'] = res[5]
+        d['logtime'] = res[7].decode()
+        try:
+            d['filepath'] = res[8].decode()
+        except:
+            d['filepath'] = 'encode error'
+        d["result"] = res[9].decode()
+        d["content_short"] = "123"
+        d["content"] = "no"
+        items.append(d)
+    response = exit_db(items, cur, conn, "fchmodat", filepath)
+    return response
+
+def table_fchmodat_delete(request):
+    delete_id = int(request.GET["id"])
+    print(delete_id)
+    response = delete("fchmodat", delete_id)
+    return response
+
+def table_fchownat(request):
+    res_list, cur, conn, filepath = read_db(request, "fchownat")
+    items = []
+    # id username uid commandname pid logtime filepath opentype openresult
+    for res in res_list:
+        d = dict()
+        d['id'] = res[0]
+        d['username'] = res[1].decode()
+        d['uid'] = res[2]
+        d['command'] = res[3].decode()
+        d['pid'] = res[4]
+        d['userid'] = res[7]
+        d['logtime'] = res[9].decode()
+        try:
+            d['filepath'] = res[10].decode()
+        except:
+            d['filepath'] = 'encode error'
+        d["result"] = res[11].decode()
+        d["content_short"] = "123"
+        d["content"] = "no"
+        items.append(d)
+    response = exit_db(items, cur, conn, "fchownat", filepath)
+    return response
+
+def table_fchownat_delete(request):
+    delete_id = int(request.GET["id"])
+    print(delete_id)
+    response = delete("fchownat", delete_id)
+    return response
+
+    
+def table_unlinkat(request):
+    res_list, cur, conn, filepath = read_db(request, "unlinkat")
+    items = []
+    # id username uid commandname pid logtime filepath opentype openresult
+    for res in res_list:
+        d = dict()
+        d['id'] = res[0]
+        d['username'] = res[1].decode()
+        d['uid'] = res[2]
+        d['command'] = res[3].decode()
+        d['pid'] = res[4]
+        d['mode'] = res[5]
+        d['logtime'] = res[7].decode()
+        try:
+            d['filepath'] = res[8].decode()
+        except:
+            d['filepath'] = 'encode error'
+        d["result"] = res[9].decode()
+        d["content_short"] = "123"
+        d["content"] = "no"
+        items.append(d)
+    response = exit_db(items, cur, conn, "unlinkat", filepath)
+    return response
+
+def table_unlinkat_delete(request):
+    delete_id = int(request.GET["id"])
+    print(delete_id)
+    response = delete("unlinkat", delete_id)
     return response

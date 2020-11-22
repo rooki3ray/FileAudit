@@ -29,5 +29,11 @@ urlpatterns = [
     path('table/kill_delete', views.table_kill_delete),
     path('table/mkdir', views.table_mkdir),
     path('table/mkdir_delete', views.table_mkdir_delete),
+    path('table/fchmodat', views.table_fchmodat),
+    path('table/fchmodat_delete', views.table_fchmodat_delete),
+    path('table/fchownat', views.table_fchownat),
+    path('table/fchownat_delete', views.table_fchownat_delete),
+    path('table/unlinkat', views.table_unlinkat),
+    path('table/unlinkat_delete', views.table_unlinkat_delete),
     # path('', views.index),
 ]
