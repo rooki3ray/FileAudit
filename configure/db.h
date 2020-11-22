@@ -114,7 +114,7 @@ void create_table(char *filename)
           "UID            INT  ,"  \
           "COMMANDNAME    TEXT ,"  \
           "PID            INT  ,"  \
-          "MOD            INT  ,"  \
+          "MODE           INT  ,"  \
           "DIRFD          INT  ,"  \
           "LOGTIME        TEXT ,"  \
           "FILEPATH       TEXT ,"  \
