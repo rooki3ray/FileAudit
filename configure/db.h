@@ -135,6 +135,19 @@ void create_table(char *filename)
           "FILEPATH       TEXT ,"  \
           "RESULT         TEXT );";
     sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+
+    sql = "CREATE TABLE UNLINKAT("  \
+          "ID INTEGER PRIMARY KEY AUTOINCREMENT ,"  \
+          "USERNAME       TEXT ,"  \
+          "UID            INT  ,"  \
+          "COMMANDNAME    TEXT ,"  \
+          "PID            INT  ,"  \
+          "MODE           INT  ,"  \
+          "DIRFD          INT  ,"  \
+          "LOGTIME        TEXT ,"  \
+          "FILEPATH       TEXT ,"  \
+          "RESULT         TEXT );";
+    sqlite3_exec(db, sql, 0, 0, &zErrMsg);
 }
 
 void close_table(void)
@@ -291,6 +304,25 @@ void insert_fchownat(char *username, int uid, char *commandname, int pid, char *
         sqlite3_free(zErrMsg);
     } else {
         fprintf(stdout, "FCHOWNAT records created successfully\n");
+    }
+    sqlite3_free(sql);
+}
+
+void insert_unlinkat(char *username, int uid, char *commandname, int pid, char *logtime, char *filepath, char *result, int mod, int dirfd)
+{
+    char *sql = NULL;
+    char *zErrMsg = NULL; 
+    sql = sqlite3_mprintf("INSERT INTO UNLINKAT (ID, USERNAME, UID, COMMANDNAME, PID, LOGTIME, MODE, FILEPATH, RESULT, DIRFD) " \
+        "VALUES (null, '%s', %d, '%s', %d, '%s', %d, '%s', '%s', %d)",
+        username, uid, commandname, pid, logtime, mod, filepath, result, dirfd);
+    
+    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
+    // printf("%s", sql);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL ERROR: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    } else {
+        fprintf(stdout, "UNLINKAT records created successfully\n");
     }
     sqlite3_free(sql);
 }

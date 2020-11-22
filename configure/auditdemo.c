@@ -19,7 +19,7 @@
 #define NETLINK_TEST 29
 #define TASK_COMM_LEN 16
 #define MAX_LENGTH 256
-#define MAX_PAYLOAD 1024  /* maximum payload size*/
+#define MAX_PAYLOAD 4096  /* maximum payload size*/
 int sock_fd;
 struct msghdr msg;
 struct nlmsghdr *nlh = NULL;
@@ -27,7 +27,7 @@ struct sockaddr_nl src_addr, dest_addr;
 struct iovec iov;
 
 // distinguish log from netlink socket
-char *syscall_name[] = {"open", "read", "write", "close", "kill", "mkdir", "fchmodat", "fchownat"}; 
+char *syscall_name[] = {"open", "read", "write", "close", "kill", "mkdir", "fchmodat", "fchownat", "unlinkat"}; 
 
 FILE *logfile;
 
@@ -210,6 +210,28 @@ void LogFchownat(char *commandname, int uid, int pid, char *file_path, int flags
 }
 
 
+void LogUnlinkat(char *commandname, int uid, int pid, char *file_path, int mod, int ret, int dirfd) {
+	char logtime[64];
+	char username[32];
+	struct passwd *pwinfo;
+	char result[10];
+
+	if (ret >= 0) strcpy(result,"success");
+	else strcpy(result,"failed");
+
+	time_t t=time(0);
+	if (logfile == NULL)	return;
+	pwinfo = getpwuid(uid);
+	strcpy(username,pwinfo->pw_name);
+	strftime(logtime, sizeof(logtime), TM_FMT, localtime(&t) );
+
+	// fprintf(logfile,"%s %s(%d) %s(%d) %s \"%s\" %s %s\n",syscall, username,uid,commandname,pid,logtime,file_path,closetype, result);
+	printf("UNLINKAT username(uid):%s(%d)  command(pid):%s(%d)  logtime:%s  filepath:\"%s\"  result:%s  mod:%o  ret:%d  dirfd:%d\n",
+		username,uid,commandname,pid,logtime,file_path, result, mod, ret, dirfd);
+    insert_unlinkat(username,uid,commandname,pid,logtime,file_path, result, mod, dirfd);
+}
+
+
 void sendpid(unsigned int pid)
 {
 	//Send message to initialize
@@ -282,10 +304,10 @@ int main(int argc, char *argv[]){
     int count = 0;
 	// Loop to get message
 	while(1) {	//Read message from kernel
-		if (count > 20) break;
+		if (count > 2) break;
         count++;
         unsigned int uid, pid,flags,ret;
-		unsigned int flag;
+		int flag = -1;
 		char * file_path;
 		char * commandname;
 		recvmsg(sock_fd, &msg, 0);
@@ -302,22 +324,28 @@ int main(int argc, char *argv[]){
 			LogOpen(commandname, uid, pid, file_path, flags, ret);
 		} 
 		else if (strcmp(syscall_name[flag], "read") == 0) {
-			char *fd_name;
-			uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh) );
+			char *fd_name = "fd_name not found";
+			uid = *( 1 + (int *)NLMSG_DATA(nlh) );
+			printf("uid : %d\n", uid);
 			pid = *( 2 + (int *)NLMSG_DATA(nlh)  );
+			printf("pid : %d\n", pid);
 			flags = *( 3 + (int *)NLMSG_DATA(nlh)  );   // read buf size
+			printf("flag : %d\n", flags);
 			ret = *( 4 + (int *)NLMSG_DATA(nlh)  );
+			printf("ret : %d\n", ret);
 			commandname = (char *)( 5 + (int *)NLMSG_DATA(nlh));
+			printf("commandname : %s\n", commandname);
 			file_path = (char *)( 5 + TASK_COMM_LEN/4 + (int *)NLMSG_DATA(nlh));
+			printf("file_path : %s\n", file_path);
 			fd_name = (char *)(5 + TASK_COMM_LEN/4 + MAX_LENGTH/4+ (int*)NLMSG_DATA(nlh) );
-			
-			printf("flag:%d pid:%d flags:%d commandname:%s file_path:%s fd:%s\n", flag, pid, flags, commandname, file_path, fd_name);
+			printf("fd_name : %s\n", fd_name);
+			printf("\n\n");
 
-			LogRead(commandname, uid, pid, file_path, flags, ret, fd_name);
+			//LogRead(commandname, uid, pid, file_path, flags, ret, fd_name);
 			
 		} 
 		else if (strcmp(syscall_name[flag], "write") == 0) {
-			char *fd_name;
+			char *fd_name = "fd_name not found";
 			uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh) );
 			pid = *( 2 + (unsigned int *)NLMSG_DATA(nlh)  );
 			flags = *( 3 + (unsigned int *)NLMSG_DATA(nlh)  );   // write buf size
@@ -382,6 +410,17 @@ int main(int argc, char *argv[]){
 			commandname = (char *)( 8 + (unsigned int *)NLMSG_DATA(nlh));
 			file_path = (char *)( 8 + TASK_COMM_LEN/4 + (unsigned int *)NLMSG_DATA(nlh));
 			LogFchownat(commandname, uid, pid, file_path, flags, ret, dirfd, gid, user_id);
+		}
+		else if (strcmp(syscall_name[flag], "unlinkat") == 0) {
+			int mod, dirfd;
+			uid = *( 1 + (unsigned int *)NLMSG_DATA(nlh) );
+			pid = *( 2 + (unsigned int *)NLMSG_DATA(nlh) );
+			mod = *( 3 + (unsigned int *)NLMSG_DATA(nlh) );
+			ret = *( 4 + (unsigned int *)NLMSG_DATA(nlh) );
+			dirfd = *( 5 + (unsigned int *)NLMSG_DATA(nlh) );  //dirfd，是否为相对路径
+			commandname = (char *)( 6 + (unsigned int *)NLMSG_DATA(nlh));
+			file_path = (char *)( 6 + TASK_COMM_LEN/4 + (unsigned int *)NLMSG_DATA(nlh));
+			LogUnlinkat(commandname, uid, pid, file_path, mod, ret, dirfd);
 		}
 		
 	}

@@ -41,6 +41,8 @@ typedef asmlinkage long (*orig_mkdir_t)(struct pt_regs *regs);
 typedef asmlinkage long (*orig_fchmodat_t)(struct pt_regs *regs);
 //原始的fchownat
 typedef asmlinkage long (*orig_fchownat_t)(struct pt_regs *regs);
+//原始的unlinkat
+typedef asmlinkage long (*orig_unlinkat_t)(struct pt_regs *regs);
 
 //原始open地址
 orig_openat_t orig_openat = NULL;
@@ -58,6 +60,8 @@ orig_mkdir_t orig_mkdir = NULL;
 orig_fchmodat_t orig_fchmodat = NULL;
 //原始fchownat地址
 orig_fchownat_t orig_fchownat = NULL;
+//原始unlinkat地址
+orig_unlinkat_t orig_unlinkat = NULL;
 
 //重载open
 int AuditOpenat(struct pt_regs *, char * pathname, int ret);
@@ -75,6 +79,8 @@ int AuditMkdir(struct pt_regs *, char * pathname, int ret);
 int AuditFchmodat(struct pt_regs *, char * pathname, int ret);
 //重载fchownat
 int AuditFchownat(struct pt_regs *, char * pathname, int ret);
+//重载unlinkat
+int AuditUnlinkat(struct pt_regs *, char * pathname, int ret);
 
 void netlink_release(void);
 void netlink_init(void);
@@ -184,6 +190,18 @@ asmlinkage long hacked_fchownat(struct pt_regs *regs)
 	AuditFchownat(regs, buffer, ret);
 	return ret;
 }
+//挂载unlinkat
+asmlinkage long hacked_unlinkat(struct pt_regs *regs)
+{
+	long ret;
+	char buffer[PATH_MAX];
+    long nbytes;
+
+	nbytes = strncpy_from_user(buffer, (char*)regs->si, PATH_MAX);
+	printk("buffer: %s ", buffer);
+	ret = orig_unlinkat(regs);
+	AuditUnlinkat(regs, buffer, ret);
+}
 
 static int __init audit_init(void)
 {
@@ -208,12 +226,15 @@ static int __init audit_init(void)
 	// // Hook Sys Call mkdir
 	// orig_mkdir = (orig_mkdir_t) sys_call_table[__NR_mkdir];
 	// printk("Info:  orginal mkdir:%lx\n",(long)orig_mkdir);
-	// Hook Sys Call fchmodat
-	orig_fchmodat = (orig_fchmodat_t) sys_call_table[__NR_fchmodat];
-	printk("Info:  orginal fchmodat:%lx\n",(long)orig_fchmodat);
-	// Hook Sys Call fchownat
-	orig_fchownat = (orig_fchownat_t) sys_call_table[__NR_fchownat];
-	printk("Info:  orginal fchownat:%lx\n",(long)orig_fchownat);
+	// // Hook Sys Call fchmodat
+	// orig_fchmodat = (orig_fchmodat_t) sys_call_table[__NR_fchmodat];
+	// printk("Info:  orginal fchmodat:%lx\n",(long)orig_fchmodat);
+	// // Hook Sys Call fchownat
+	// orig_fchownat = (orig_fchownat_t) sys_call_table[__NR_fchownat];
+	// printk("Info:  orginal fchownat:%lx\n",(long)orig_fchownat);
+	// Hook Sys Call unlinkat
+	orig_unlinkat = (orig_unlinkat_t) sys_call_table[__NR_unlinkat];
+	printk("Info:  orginal unlinkat:%lx\n",(long)orig_unlinkat);
 
 	pte = lookup_address((unsigned long) sys_call_table, &level);
 	// Change PTE to allow writing
@@ -226,8 +247,9 @@ static int __init audit_init(void)
 	// sys_call_table[__NR_write] = (demo_sys_call_ptr_t) hacked_write;
 	// sys_call_table[__NR_kill] = (demo_sys_call_ptr_t) hacked_kill;
 	// sys_call_table[__NR_mkdir] = (demo_sys_call_ptr_t) hacked_mkdir;
-	sys_call_table[__NR_fchmodat] = (demo_sys_call_ptr_t) hacked_fchmodat;
-	sys_call_table[__NR_fchownat] = (demo_sys_call_ptr_t) hacked_fchownat;
+	// sys_call_table[__NR_fchmodat] = (demo_sys_call_ptr_t) hacked_fchmodat;
+	// sys_call_table[__NR_fchownat] = (demo_sys_call_ptr_t) hacked_fchownat;
+	sys_call_table[__NR_unlinkat] = (demo_sys_call_ptr_t) hacked_unlinkat;
 
 	set_pte_atomic(pte, pte_clear_flags(*pte, _PAGE_RW));
 	printk("Info: sys_call_table hooked!\n");
@@ -247,8 +269,9 @@ static void __exit audit_exit(void)
 	// // sys_call_table[__NR_write] = (demo_sys_call_ptr_t)orig_write;
 	// sys_call_table[__NR_kill] = (demo_sys_call_ptr_t)orig_kill;
 	// sys_call_table[__NR_mkdir] = (demo_sys_call_ptr_t)orig_mkdir;
-	sys_call_table[__NR_fchmodat] = (demo_sys_call_ptr_t)orig_fchmodat;
-	sys_call_table[__NR_fchownat] = (demo_sys_call_ptr_t)orig_fchownat;
+	// sys_call_table[__NR_fchmodat] = (demo_sys_call_ptr_t)orig_fchmodat;
+	// sys_call_table[__NR_fchownat] = (demo_sys_call_ptr_t)orig_fchownat;
+	sys_call_table[__NR_unlinkat] = (demo_sys_call_ptr_t)orig_unlinkat;
 
 	set_pte_atomic(pte, pte_clear_flags(*pte, _PAGE_RW));
 
