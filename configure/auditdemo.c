@@ -84,7 +84,7 @@ void LogWrite(char *commandname, int uid, int pid, char *file_path, int flags, i
 	struct passwd *pwinfo;
 	char result[10];
 
-	if (ret > 0) strcpy(result,"success");
+	if (ret >= 0) strcpy(result,"success");
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
@@ -104,7 +104,7 @@ void LogClose(char *commandname, int uid, int pid, char *file_path, int flags, i
 	struct passwd *pwinfo;
 	char result[10];
 
-	if (ret > 0) strcpy(result,"success");
+	if (ret == 0) strcpy(result,"success");
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
@@ -131,7 +131,7 @@ void LogKill(char *commandname, int uid, int pid, char *file_path, int ret, int 
 	struct passwd *pwinfo;
 	char result[10];
 
-	if (ret > 0) strcpy(result,"success");
+	if (ret == 0) strcpy(result,"success");
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
@@ -152,7 +152,7 @@ void LogMkdir(char *commandname, int uid, int pid, char *file_path, int mode, in
 	struct passwd *pwinfo;
 	char result[10];
 
-	if (ret > 0) strcpy(result,"success");
+	if (ret == 0) strcpy(result,"success");
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
@@ -173,7 +173,7 @@ void LogFchmodat(char *commandname, int uid, int pid, char *file_path, int mod, 
 	struct passwd *pwinfo;
 	char result[10];
 
-	if (ret > 0) strcpy(result,"success");
+	if (ret == 0) strcpy(result,"success");
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
@@ -194,7 +194,7 @@ void LogFchownat(char *commandname, int uid, int pid, char *file_path, int flags
 	struct passwd *pwinfo;
 	char result[10];
 
-	if (ret >= 0) strcpy(result,"success");
+	if (ret == 0) strcpy(result,"success");
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
@@ -216,7 +216,7 @@ void LogUnlinkat(char *commandname, int uid, int pid, char *file_path, int mod, 
 	struct passwd *pwinfo;
 	char result[10];
 
-	if (ret >= 0) strcpy(result,"success");
+	if (ret == 0) strcpy(result,"success");
 	else strcpy(result,"failed");
 
 	time_t t=time(0);
@@ -301,11 +301,11 @@ int main(int argc, char *argv[]){
     char *filename = "test.db";
     create_table(filename);
 
-    int count = 0;
+    // int count = 0;
 	// Loop to get message
 	while(1) {	//Read message from kernel
-		if (count > 2) break;
-        count++;
+		// if (count > 2) break;
+        // count++;
         unsigned int uid, pid,flags,ret;
 		int flag = -1;
 		char * file_path;
