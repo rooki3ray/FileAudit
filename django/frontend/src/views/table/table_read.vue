@@ -65,11 +65,6 @@
           <span v-else>0</span>
         </template>
       </el-table-column>
-      <el-table-column label="Mode" align="center" width="60px">
-        <template slot-scope="{row}">
-          <span>{{ row.mode }}</span>
-        </template>
-      </el-table-column>
       <el-table-column label="Result" align="center" class-name="status-col" width="120">
         <template slot-scope="{row}">
           <el-tag :type="row.result | statusFilter">
@@ -170,7 +165,7 @@ export default {
   methods: {
     fetchData() {
       this.listLoading = true
-      getList("fchmodat", this.listQuery).then(response => {
+      getList("read", this.listQuery).then(response => {
         this.list = response.data.items
         this.total = response.data.total
 
@@ -215,24 +210,6 @@ export default {
         type: ''
       }
     },
-    createData() {
-      this.$refs['dataForm'].validate((valid) => {
-        if (valid) {
-          this.temp.id = parseInt(Math.random() * 100) + 1024 // mock a id
-          this.temp.author = 'vue-element-admin'
-          createArticle(this.temp).then(() => {
-            this.list.unshift(this.temp)
-            this.dialogFormVisible = false
-            this.$notify({
-              title: 'Success',
-              message: 'Created Successfully',
-              type: 'success',
-              duration: 2000
-            })
-          })
-        }
-      })
-    },
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
       this.temp.timestamp = new Date(this.temp.timestamp)
@@ -271,7 +248,7 @@ export default {
       this.deleteQuery = {
         id: this.list[index]['id']
       }
-      deleteRecord("fchmodat_delete", this.deleteQuery).then(response => {
+      deleteRecord("close_delete", this.deleteQuery).then(response => {
         this.list.splice(index, 1)
         // this.list = response.data.items
         // this.total = response.data.total

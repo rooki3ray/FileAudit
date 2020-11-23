@@ -50,7 +50,8 @@
       </el-table-column>
       <el-table-column v-if="showUid" label="Uid" width="60px" align="center">
         <template slot-scope="{row}">
-          <span style="color:red;">{{ row.uid }}</span>
+          <!-- <span style="color:red;">{{ row.uid }}</span> -->
+          <span>{{ row.uid }}</span>
         </template>
       </el-table-column>
       <el-table-column label="Command" align="center" width="100px">
@@ -71,17 +72,8 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Actions" align="center" width="360" class-name="small-padding fixed-width">
+      <el-table-column label="Actions" align="center" width="120" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
-          <el-button type="primary" size="mini" @click="handleUpdate(row)">
-            Edit
-          </el-button>
-          <el-button v-if="row.status!='published'" size="mini" type="success" @click="handleModifyStatus(row,'published')">
-            Publish
-          </el-button>
-          <el-button v-if="row.status!='draft'" size="mini" @click="handleModifyStatus(row,'draft')">
-            Draft
-          </el-button>
           <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row, $index)">
             Delete
           </el-button>
