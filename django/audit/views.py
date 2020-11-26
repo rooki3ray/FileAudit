@@ -12,7 +12,7 @@ def read_db(request, table):
     sort = "ASC" if request.GET["sort"] == "+id" else "DESC"
     filepath = request.GET.get("filepath", "")
     print(page, limit, sort, filepath)
-    conn = sqlite3.connect('test.db')
+    conn = sqlite3.connect('../configure/test.db')
     conn.text_factory = bytes
     cur = conn.cursor()
     if not filepath: 
