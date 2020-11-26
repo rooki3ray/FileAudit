@@ -6,13 +6,15 @@ from django.http import FileResponse, HttpResponse, JsonResponse
 
 # Create your views here.
 
+DB_PATH = "../configure/test.db"
+
 def read_db(request, table):
     page = int(request.GET["page"])
     limit = int(request.GET["limit"])
     sort = "ASC" if request.GET["sort"] == "+id" else "DESC"
     filepath = request.GET.get("filepath", "")
     print(page, limit, sort, filepath)
-    conn = sqlite3.connect('../configure/test.db')
+    conn = sqlite3.connect(DB_PATH)
     conn.text_factory = bytes
     cur = conn.cursor()
     if not filepath: 
@@ -40,7 +42,7 @@ def exit_db(items, cur, conn, table, filepath=""):
     return response
 
 def delete(table, delete_id):
-    conn = sqlite3.connect('test.db')
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     sql = "delete from {} where id={}".format(table, delete_id)
     cur.execute(sql)
@@ -53,15 +55,7 @@ def delete(table, delete_id):
     return response
 
 def table_open(request):
-    page = int(request.GET["page"])
-    limit = int(request.GET["limit"])
-    sort = "ASC" if request.GET["sort"] == "+id" else "DESC"
-    print(page, limit, sort)
-    conn = sqlite3.connect('test.db')
-    conn.text_factory = bytes
-    cur = conn.cursor()
-    sql = "select * from open order by id {} limit {}, {}".format(sort, limit * (page - 1), limit)
-    res_list = cur.execute(sql)
+    res_list, cur, conn, filepath = read_db(request, "open")
     items = []
     # id username uid commandname pid logtime filepath opentype openresult 
     for res in res_list:
@@ -80,18 +74,7 @@ def table_open(request):
         d["content_short"] = "123"
         d["content"] = "no"
         items.append(d)
-    sql = "select count(id) from open"
-    total = cur.execute(sql).fetchall()[0][0]
-    cur.close()
-    conn.close()
-    content = {
-        "total": total,
-        "items": items
-    }
-    response = HttpResponse(json.dumps(content), content_type="application/json")
-    response['Access-Control-Allow-Origin'] = '*'  # 允许所有的域名地址
-    response["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS,PATCH,PUT"  # 允许的请求方式
-    # response["Access-Control-Allow-Headers"] = "Content-Type"  # 允许的headers
+    response = exit_db(items, cur, conn, "open", filepath)
     return response
 
 

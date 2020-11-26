@@ -14,7 +14,7 @@
 
 #define TASK_COMM_LEN 16
 #define NETLINK_TEST 29
-#define AUDITPATH "/home/TestAudit"
+#define AUDITPATH "/home/test/Desktop/TestAudit"
 #define MAX_LENGTH 256
 
 static u32 pid=0;
