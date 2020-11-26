@@ -146,7 +146,11 @@ def table_read(request):
             d['filepath'] = res[6].decode()
         except:
             d['filepath'] = 'encode error'
-        d["result"] = res[7].decode()
+        try:
+            d["fdname"] = res[7].decode()
+        except:
+            d['fdname'] = 'encode error'
+        d["result"] = res[8].decode()
         d["content_short"] = "123"
         d["content"] = "no"
         items.append(d)
@@ -176,7 +180,11 @@ def table_write(request):
             d['filepath'] = res[6].decode()
         except:
             d['filepath'] = 'encode error'
-        d["result"] = res[7].decode()
+        try:
+            d["fdname"] = res[7].decode()
+        except:
+            d['fdname'] = 'encode error'
+        d["result"] = res[8].decode()
         d["content_short"] = "123"
         d["content"] = "no"
         items.append(d)

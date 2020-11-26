@@ -14,6 +14,9 @@
       <el-checkbox v-model="showUid" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">
         uid
       </el-checkbox>
+      <el-checkbox v-model="showFdname" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">
+        fdname
+      </el-checkbox>
     </div>
 
     <el-table
@@ -41,6 +44,11 @@
         <template slot-scope="{row}">
           <span class="link-type" @click="handleUpdate(row)">{{ row.filepath }}</span>
           <!-- <el-tag>{{ row.type | typeFilter }}</el-tag> -->
+        </template>
+      </el-table-column>
+      <el-table-column v-if="showFdname" label="Fdname" min-width="150px">
+        <template slot-scope="{row}">
+          <span class="link-type" @click="handleUpdate(row)">{{ row.fdname }}</span>
         </template>
       </el-table-column>
       <el-table-column label="Username" width="110px" align="center">
