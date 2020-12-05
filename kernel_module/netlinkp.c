@@ -14,7 +14,7 @@
 
 #define TASK_COMM_LEN 16
 #define NETLINK_TEST 29
-#define AUDITPATH "/home/TestAudit"
+#define AUDITPATH "/home/test/Desktop/TestAudit"
 #define MAX_LENGTH 256
 
 static u32 pid=0;
@@ -134,84 +134,55 @@ int AuditRead(struct pt_regs *regs, char *pathname, int ret)
     unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
     void *buffer; // = kmalloc(size, 0);
     char auditpath[PATH_MAX];
-    char *fd_name = NULL;
+    char fd_name[512];
     const struct cred *cred;
 
     memset(fullname, 0, PATH_MAX);
     memset(auditpath, 0, PATH_MAX);
 
-    if(pathname == NULL)
-    {
-        printk("pathname is null");
-        return 0;
-    }
-        
     get_fullname(pathname, fullname);
     strcpy(auditpath, AUDITPATH);
-    if (strncmp(fullname, auditpath, strlen(auditpath)) != 0)  
-        return 1;
 
-    char ac_Buf[128];
+    if (strncmp(fullname, auditpath, strlen(auditpath)) != 0) return 1;
+
+    printk("read, Info: fullname is  %s \t; Auditpath is  %s \n", fullname, AUDITPATH);
+
+    strncpy(commandname,current->comm,TASK_COMM_LEN);
+    char ac_Buf[512];
     struct file * pst_File = NULL;
     //取出FD对应struct file并检验
     pst_File = fget(regs->di);
     if (NULL != pst_File)
     {
         //取出FD对应文件路径及文件名并检验
-        fd_name = d_path(&(pst_File->f_path), ac_Buf, sizeof(ac_Buf));
+        strcpy(fd_name, d_path(&(pst_File->f_path), ac_Buf, sizeof(ac_Buf)));
 
         // if (NULL != fd_name)
-        // {
         //     printk("\tfd %d is %s, addr is 0x%p", regs->di, fd_name, pst_File);
-        // }
         // else
-        // {
         //     printk("\tfd %d name is NULL, addr is 0x%p", regs->di, pst_File);
-        // }
-        // fget(),fput()成对
+        // // fget(),fput()成对
         fput(pst_File);
     }
-
-    strncpy(commandname,current->comm,TASK_COMM_LEN);
-
-    if(fd_name != NULL)
+    if(NULL == fd_name)
     {
-        size = strlen(fd_name) + 16 + TASK_COMM_LEN + 1 + PATH_MAX + 4;
+        strcpy(fd_name, "fd_name not found");
     }
-    else
-    {
-        size = strlen("fd_name not found") + 16 + TASK_COMM_LEN + 1 + PATH_MAX + 4;
-    }
-    
+
+    size = strlen(fullname) + 16 + TASK_COMM_LEN + 1 + 4 + 512;
     buffer = kmalloc(size, 0);
     memset(buffer, 0, size);
 
     cred = current_cred();
     *((int*)buffer) = flag;
-    // printk("flag : %d", *((int*)buffer));
-    *((int*)buffer + 1) = cred->uid.val; ;  //uid
-    // printk("uid : %d", *((int*)buffer)+1);
+    *((int*)buffer + 1) = cred->uid.val;  //uid
     *((int*)buffer + 2) = current->pid;
-    // printk("pid : %d", *((int*)buffer)+2);
-    *((int*)buffer + 3) = regs->dx; // regs->dx: read buf size
-    // printk("size : %d", *((int*)buffer)+3);
+    *((int*)buffer + 3) = regs->dx; // regs->dx: count for read
     *((int*)buffer + 4) = ret;
-    // printk("ret : %d", *((int*)buffer)+4);
     strcpy( (char*)( 5 + (int*)buffer ), commandname);
-    // printk("commandname : %s", (char*)( 5 + (int*)buffer ));
-    strcpy( (char*)( 5 + TASK_COMM_LEN/4 + (int*)buffer ), fullname);
-    // printk("fullname : %s", (char*)( 5 + TASK_COMM_LEN/4 + (int*)buffer ));
-    
-    if(fd_name)
-    {
-        strcpy( (char*)( 5 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ), fd_name);
-        printk("fd_name: %s", fd_name);
-    }
-    else
-    {
-        strcpy( (char*)( 5 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ), "fd_name not found");
-        printk("fd_name not found");
-    }
+    strcpy( (char*)( 5 + TASK_COMM_LEN/4 + (int*)buffer ), fd_name);
+    strcpy( (char*)( 5 + TASK_COMM_LEN/4 + 512/4 + (int*)buffer ), fullname);
+    printk("fd_name: %s, fullname: %s", fd_name, fullname);
 
     netlink_sendmsg(buffer, size);
     return 0;
@@ -225,7 +196,7 @@ int AuditWrite(struct pt_regs *regs, char * pathname, int ret)
     unsigned int size;   // = strlen(pathname) + 32 + TASK_COMM_LEN;
     void *buffer; // = kmalloc(size, 0);
     char auditpath[PATH_MAX];
-    char *fd_name = NULL;
+    char fd_name[512];
     const struct cred *cred;
 
     memset(fullname, 0, PATH_MAX);
@@ -233,43 +204,47 @@ int AuditWrite(struct pt_regs *regs, char * pathname, int ret)
 
     get_fullname(pathname, fullname);
     strcpy(auditpath, AUDITPATH);
-    if (strncmp(fullname, auditpath, strlen(auditpath)) != 0)  
-        return 1;
-    printk("write, Info: fullname is  %s \t; Auditpath is  %s ; fd is %ld", fullname, AUDITPATH, regs->di);
 
-    char ac_Buf[128];
+    if (strncmp(fullname, auditpath, strlen(auditpath)) != 0) return 1;
+
+    printk("write, Info: fullname is  %s \t; Auditpath is  %s \n", fullname, AUDITPATH);
+
+    strncpy(commandname,current->comm,TASK_COMM_LEN);
+    char ac_Buf[512];
     struct file * pst_File = NULL;
     //取出FD对应struct file并检验
     pst_File = fget(regs->di);
-    int file_size = pst_File->f_inode->i_size; //文件大小
     if (NULL != pst_File)
     {
         //取出FD对应文件路径及文件名并检验
-        fd_name = d_path(&(pst_File->f_path), ac_Buf, sizeof(ac_Buf));
-        //fget(),fput()成对
+        strcpy(fd_name, d_path(&(pst_File->f_path), ac_Buf, sizeof(ac_Buf)));
+
+        // if (NULL != fd_name)
+        //     printk("\tfd %d is %s, addr is 0x%p", regs->di, fd_name, pst_File);
+        // else
+        //     printk("\tfd %d name is NULL, addr is 0x%p", regs->di, pst_File);
+        // // fget(),fput()成对
         fput(pst_File);
     }
+    if(NULL == fd_name)
+    {
+        strcpy(fd_name, "fd_name not found");
+    }
 
-    strncpy(commandname,current->comm,TASK_COMM_LEN);
-
-    size = strlen(fd_name) + 16 + TASK_COMM_LEN + 1 + PATH_MAX + 4;
+    size = strlen(fullname) + 16 + TASK_COMM_LEN + 1 + 4 + 512;
     buffer = kmalloc(size, 0);
     memset(buffer, 0, size);
 
     cred = current_cred();
-    //int类型占用四个字节
     *((int*)buffer) = flag;
-    *((int*)buffer + 1) = cred->uid.val; ;  //uid
+    *((int*)buffer + 1) = cred->uid.val;  //uid
     *((int*)buffer + 2) = current->pid;
-    *((int*)buffer + 3) = regs->dx; // regs->dx: write buf size
+    *((int*)buffer + 3) = regs->dx; // regs->dx: count for write
     *((int*)buffer + 4) = ret;
     strcpy( (char*)( 5 + (int*)buffer ), commandname);
-    strcpy( (char*)( 5 + TASK_COMM_LEN/4 + (int*)buffer ), fullname);
-    strcpy( (char*)( 5 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ), fd_name); //不确定是否可以
-
-    printk((char*)( 5 + (int*)buffer ));
-    printk((char*)( 5 + TASK_COMM_LEN/4 + (int*)buffer ));
-    printk((char*)( 5 + TASK_COMM_LEN/4 + MAX_LENGTH/4 + (int*)buffer ));
+    strcpy( (char*)( 5 + TASK_COMM_LEN/4 + (int*)buffer ), fd_name);
+    strcpy( (char*)( 5 + TASK_COMM_LEN/4 + 512/4 + (int*)buffer ), fullname);
+    printk("fd_name: %s, fullname: %s", fd_name, fullname);
 
     netlink_sendmsg(buffer, size);
     return 0;

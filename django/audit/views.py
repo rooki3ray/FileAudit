@@ -6,15 +6,15 @@ from django.http import FileResponse, HttpResponse, JsonResponse
 
 # Create your views here.
 
+DB_PATH = "../configure/test.db"
+
 def read_db(request, table):
     page = int(request.GET["page"])
     limit = int(request.GET["limit"])
     sort = "ASC" if request.GET["sort"] == "+id" else "DESC"
     filepath = request.GET.get("filepath", "")
-
     print(page, limit, sort, filepath)
-
-    conn = sqlite3.connect('test.db')
+    conn = sqlite3.connect(DB_PATH)
     conn.text_factory = bytes
     cur = conn.cursor()
     if not filepath: 
@@ -41,18 +41,21 @@ def exit_db(items, cur, conn, table, filepath=""):
     response["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS,PATCH,PUT"  # 允许的请求方式
     return response
 
-def table_open(request):
-    page = int(request.GET["page"])
-    limit = int(request.GET["limit"])
-    sort = "ASC" if request.GET["sort"] == "+id" else "DESC"
-
-    print(page, limit, sort)
-
-    conn = sqlite3.connect('test.db')
-    conn.text_factory = bytes
+def delete(table, delete_id):
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    sql = "select * from open order by id {} limit {}, {}".format(sort, limit * (page - 1), limit)
-    res_list = cur.execute(sql)
+    sql = "delete from {} where id={}".format(table, delete_id)
+    cur.execute(sql)
+    cur.close()
+    conn.commit()
+    conn.close()
+    response = HttpResponse(json.dumps({}), content_type="application/json")
+    response['Access-Control-Allow-Origin'] = '*'  # 允许所有的域名地址
+    response["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS,PATCH,PUT"  # 允许的请求方式
+    return response
+
+def table_open(request):
+    res_list, cur, conn, filepath = read_db(request, "open")
     items = []
     # id username uid commandname pid logtime filepath opentype openresult 
     for res in res_list:
@@ -71,33 +74,9 @@ def table_open(request):
         d["content_short"] = "123"
         d["content"] = "no"
         items.append(d)
-
-    sql = "select count(id) from open"
-    total = cur.execute(sql).fetchall()[0][0]
-    cur.close()
-    conn.close()
-    content = {
-        "total": total,
-        "items": items
-    }
-    response = HttpResponse(json.dumps(content), content_type="application/json")
-    response['Access-Control-Allow-Origin'] = '*'  # 允许所有的域名地址
-    response["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS,PATCH,PUT"  # 允许的请求方式
-    # response["Access-Control-Allow-Headers"] = "Content-Type"  # 允许的headers
+    response = exit_db(items, cur, conn, "open", filepath)
     return response
 
-def delete(table, delete_id):
-    conn = sqlite3.connect('test.db')
-    cur = conn.cursor()
-    sql = "delete from {} where id={}".format(table, delete_id)
-    cur.execute(sql)
-    cur.close()
-    conn.commit()
-    conn.close()
-    response = HttpResponse(json.dumps({}), content_type="application/json")
-    response['Access-Control-Allow-Origin'] = '*'  # 允许所有的域名地址
-    response["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS,PATCH,PUT"  # 允许的请求方式
-    return response
 
 def table_open_delete(request):
     delete_id = int(request.GET["id"])
@@ -112,7 +91,6 @@ def table_close(request):
     for res in res_list:
         d = dict()
         d['id'] = res[0]
-
         d['username'] = res[1].decode()
         d['uid'] = res[2]
         d['command'] = res[3].decode()
@@ -129,12 +107,79 @@ def table_close(request):
     response = exit_db(items, cur, conn, "close", filepath)
     return response
 
-
 def table_close_delete(request):
     delete_id = int(request.GET["id"])
     print(delete_id)
     response = delete("close", delete_id)
     return response
+
+def table_read(request):
+    res_list, cur, conn, filepath = read_db(request, "read")
+    items = []
+    # id username uid commandname pid logtime filepath opentype openresult 
+    for res in res_list:
+        d = dict()
+        d['id'] = res[0]
+        d['username'] = res[1].decode()
+        d['uid'] = res[2]
+        d['command'] = res[3].decode()
+        d['pid'] = res[4]
+        d['logtime'] = res[5].decode()
+        try:
+            d['filepath'] = res[6].decode()
+        except:
+            d['filepath'] = 'encode error'
+        try:
+            d["fdname"] = res[7].decode()
+        except:
+            d['fdname'] = 'encode error'
+        d["result"] = res[8].decode()
+        d["content_short"] = "123"
+        d["content"] = "no"
+        items.append(d)
+    response = exit_db(items, cur, conn, "read", filepath)
+    return response
+
+def table_read_delete(request):
+    delete_id = int(request.GET["id"])
+    print(delete_id)
+    response = delete("read", delete_id)
+    return response
+    
+
+def table_write(request):
+    res_list, cur, conn, filepath = read_db(request, "write")
+    items = []
+    # id username uid commandname pid logtime filepath opentype openresult 
+    for res in res_list:
+        d = dict()
+        d['id'] = res[0]
+        d['username'] = res[1].decode()
+        d['uid'] = res[2]
+        d['command'] = res[3].decode()
+        d['pid'] = res[4]
+        d['logtime'] = res[5].decode()
+        try:
+            d['filepath'] = res[6].decode()
+        except:
+            d['filepath'] = 'encode error'
+        try:
+            d["fdname"] = res[7].decode()
+        except:
+            d['fdname'] = 'encode error'
+        d["result"] = res[8].decode()
+        d["content_short"] = "123"
+        d["content"] = "no"
+        items.append(d)
+    response = exit_db(items, cur, conn, "write", filepath)
+    return response
+
+def table_write_delete(request):
+    delete_id = int(request.GET["id"])
+    print(delete_id)
+    response = delete("write", delete_id)
+    return response
+    
 
 def table_kill(request):
     res_list, cur, conn, filepath = read_db(request, "kill")
